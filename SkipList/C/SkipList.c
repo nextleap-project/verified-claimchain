@@ -51,8 +51,37 @@ temp = ((temp->pointers)[0]).leaf;
 
 
 }
-void buildLinks(Leaf* tree, int size)
+void buildLinks(Leaf* head, int size)
 {
+
+Leaf* child; 
+Leaf* temp = head;
+while(temp !=NULL)
+{
+for (int i = 0; i<temp->level; i++)
+{
+child = (temp->pointers)[0].leaf;
+while(child->level<i && child!=NULL )
+{
+child = (child->pointers)[0].leaf;
+}
+
+if (child!=NULL)
+{
+LL* elem = (LL*)malloc(sizeof(LL));
+(*elem).leaf = child;
+(*elem).pointer = NULL; 
+(temp-> pointers[i-1]).pointer = elem; 
+}
+
+}
+}
+
+int i = 0;
+for (i = 0; i< size; i++)
+{
+
+}
 
 }
 
