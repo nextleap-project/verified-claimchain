@@ -3,102 +3,72 @@
 #include <time.h>
 #include <math.h>
 
+struct LL
+{
+struct Leaf * leaf;
+struct LL * pointer;
+};
+
+typedef struct LL LL;
+
 struct Leaf { 
-    int key; 
-    int level;
-    struct Leaf* pointers;
+int key; 
+int level;
+LL* pointers;
 
 };
 
 typedef struct Leaf Leaf;
 
-void printStructure(Leaf l)
-{
-    int i=0;
-    printf("key: %d\n", l.key);
-    printf("level: %d\n", l.level);
-    for(i = 0; i<l.level; i++)
-    {
-        printf("pointer: %p\n", l.pointers[i]);
-    }
-}
-
 int random_level( int max_level)
 {
-    return (rand()%max_level+1);
+return (rand()%max_level+1);
 }
 
-void generateOneLeaf(Leaf * a, int key, int max_level)
-{    
-    int counter = 0;
-    (*a).key = key;
-    int level = random_level(max_level);
-    (*a).level = level;
-    (*a).pointers = (Leaf*)malloc(sizeof(Leaf*)*level);
-}
+Leaf* generateOneLeaf(int key, int max_level)
+{ 
+int levels = random_level(max_level);
+LL* pointers = (LL*)malloc(sizeof(LL)*levels);
 
-void buildReference(Leaf* array, int size)
-{
-    int i = 0;
-    int j = 0; 
-    int k = 0;
+Leaf* leaf = (Leaf*)(malloc(sizeof(Leaf)));
+(*leaf).key = key;
+(*leaf).level = levels;
+(*leaf).pointers = pointers;
 
-    printf("%d\n", (*array).key);
-    for (i = 0; i < size; i++)
-    {
-        for (j = 0; j<array[i].level; j++)
-        {
-            for (k  = i+1; k<size; k++ )
-            {
-                if (array[k].level < j)
-                {
-                    array[i].pointers[j] = array[k];
-                    break;
-                }
-            }
-
-            if (NULL == &array[i].pointers[j])
-            {
-                array[i].pointers[j] = array[size];
-            }
-        }
-    }
+return leaf;
 }
 
 int main ()
 {
-    srand(time(NULL));
-    int size = 7;
-    int i= 0;
-    int array[size];
-    int max_level = (int)ceil(log2(size));
+srand(time(NULL));
+int size = 7;
+int i= 0;
+int array[size];
+int max_level = (int)ceil(log2(size));
 
-    array[0]=3;
-    array[1]=5;
-    array[2]=6;
-    array[3]=20;
-    array[4]=21;
-    array[5]=25;
-    array[6]=26;
+array[0]=3;
+array[1]=5;
+array[2]=6;
+array[3]=20;
+array[4]=21;
+array[5]=25;
+array[6]=26;
 
-    Leaf array_to_sort[size+1];
-    for (i = 0; i<size; i++){
-        generateOneLeaf(&array_to_sort[i], array[i], max_level);
-        //printStructure(array_to_sort[i]);
-    }
+LL* llheap = (LL *)malloc(sizeof (LL)*max_level);
+Leaf* heap = (Leaf*)malloc(sizeof (Leaf));
+heap->key = 0;
+heap->level = max_level;
+heap->pointers = llheap;
 
+Leaf* current = heap;
 
-    Leaf last;
-    last.key = 10;
-    last.level = max_level;
-    array_to_sort[size] = last;
+for (i =0; i<size; i++)
+{
+Leaf* newLeaf= generateOneLeaf(array[i],max_level);
+((current->pointers)[0]).leaf = newLeaf;
+current = newLeaf;
+}
 
-    buildReference(array_to_sort, size);
-
-    for (i = 0; i<size; i++){
-        printStructure(array_to_sort[i]);
-    }
-
-    return 0;
+return 0;
 
 }
