@@ -48,12 +48,35 @@ let hd  sl =
     match sl with 
     Mk v l a  -> v
 
-val tl: sl:skipList 'a {isCons sl} -> Tot (skipList 'a)
+val tls : sl: skipList 'a {isCons sl } -> Tot (list(skipList 'a))
+let tls sl = 
+    match sl with
+    Mk v l a -> a
 
+(*takes skipList and returns nth link to it*)
+val tl: sl:skipList 'a {isCons sl} -> level: nat -> Tot (option (skipList 'a))
+let tl sl level = 
+    let lst = tls sl in FStar.List.Tot.Base.nth lst level
+
+val isConsList: skipList 'a -> Tot bool
+let isConsList sl = 
+    match sl with 
+    | Mk v l a -> true && (FStar.List.Tot.Base.length a > 0)
+    | _ -> false
 
 (*)
-val length: skipList 'a -> Tot nat
-
+val tl_last : sl:skipList 'a {isCons sl} -> Tot (option (skipList 'a))
+let tl_last sl = 
+    let lst = tls sl in 
+    let len = FStar.List.Tot.Base.length lst in tl lst len
+(*
+)val length: skipList 'a -> Tot nat
+let rec length sl = 
+    match sl with
+    | None -> 0
+    | a -> match a with
+        Mk v l a -> 1 + length (tl_last sl) 
+(*)
 val nth : skipList 'a  -> 'a
 
 val count: #a:eqtype -> a -> skipList a -> Tot nat
