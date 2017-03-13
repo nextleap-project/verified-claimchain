@@ -60,6 +60,12 @@ let tls sl =
     match sl with
     |Mk v l a -> a
 
+val tails : sl: skipList 'a  -> Tot (option (list (skipList 'a))) 
+let tails sl = 
+    match sl with
+    | Mk v l a -> Some a
+    | _ -> None
+
 (*takes skipList and returns nth link to it*)
 val tl: sl:skipList 'a {isMk sl} -> level: nat -> Tot (option (skipList 'a))
 let tl sl level = 
@@ -90,16 +96,9 @@ let rec lengthLL sl =
     | Mk v l a -> 
         let l = FStar.List.Tot.Base.length a in 
         let elemLast = FStar.List.Tot.Base.nth a l in 
-        let elemLast = get elemLast in lengthLL elemLast
+        let elemLast = get elemLast in 
+        let lenCurrent = lengthLL elemLast in 1 + lenCurrent
     | _ -> 0
-
-(*)
-(*length LL counts the quantity of elements as Linked List*)
-val lengthLL: skipList 'a -> Tot nat
-let rec lengthLL sl = 
-    match sl with 
-    | Empty -> 0
-    | Mk v l a -> 1 + lengthLL (tl_last sl)
 
 val lengthTotal: skipList 'a -> Tot nat
 (*)
