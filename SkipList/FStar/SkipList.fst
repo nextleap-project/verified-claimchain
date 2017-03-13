@@ -46,7 +46,7 @@ val isH: skipList 'a -> Tot bool
 let isH sl = 
     match sl with 
     | Mk v _ _ -> true
-    | MkEmpty v _ _ -> true
+    | MkEmpty v -> true
     | _ -> false
 
 val hd: sl:skipList 'a{isH sl} -> Tot 'a
@@ -59,7 +59,6 @@ val tls : sl: skipList 'a {isMk sl } -> Tot (list(skipList 'a))
 let tls sl = 
     match sl with
     |Mk v l a -> a
-    |MkEmpty _ _ _ ->  failwith "Last element"
 
 (*takes skipList and returns nth link to it*)
 val tl: sl:skipList 'a {isMk sl} -> level: nat -> Tot (option (skipList 'a))
@@ -68,7 +67,7 @@ let tl sl level =
 
 val tail: sl:skipList 'a -> level:nat -> Tot (option (skipList 'a))
 let tail sl level = 
-    match tl with 
+    match sl with 
     |Mk v l a -> FStar.List.Tot.Base.nth (tls sl) level
     |_ -> None    
 
@@ -85,15 +84,14 @@ let tl_last sl =
     let l = FStar.List.Tot.Base.length sl in 
     let elemLast = FStar.List.Tot.Base.nth sl l in get elemLast
 
-val lengthLL : sl:skipList 'a -> Tot (nat)
+val lengthLL : sl:skipList 'a -> ML(nat)
 let rec lengthLL sl = 
     match sl with 
-    | Empty -> 0
-    | MkEmpty v -> 0
     | Mk v l a -> 
-    (* here -> it means that at least there is one element in list due to the properties
-    of contructor*)
-    1 + lengthLL (tl_last a)
+        let l = FStar.List.Tot.Base.length a in 
+        let elemLast = FStar.List.Tot.Base.nth a l in 
+        let elemLast = get elemLast in lengthLL elemLast
+    | _ -> 0
 
 (*)
 (*length LL counts the quantity of elements as Linked List*)
