@@ -10,7 +10,7 @@ type skipList 'a =
 
 type skipList 'a =
      | Empty : skipList 'a
-     | Mk: value : 'a -> levels : int -> a:list(skipList 'a) -> skipList 'a 
+     | Mk: value : 'a -> levels : int -> a:list(skipList 'a){length a > 0} -> skipList 'a 
      | MkEmpty: value : 'a -> skipList 'a 
 (*)
 val test: v: 'a  -> levels : int ->  a:list(skipList 'a) -> skipList 'a 
@@ -59,12 +59,18 @@ val tls : sl: skipList 'a {isMk sl } -> Tot (list(skipList 'a))
 let tls sl = 
     match sl with
     |Mk v l a -> a
-    |MkEmpty _ _ _ ->  failwith "head of empty list"
+    |MkEmpty _ _ _ ->  failwith "Last element"
 
 (*takes skipList and returns nth link to it*)
 val tl: sl:skipList 'a {isMk sl} -> level: nat -> Tot (option (skipList 'a))
 let tl sl level = 
     let lst = tls sl in FStar.List.Tot.Base.nth lst level
+
+val tail: sl:skipList 'a -> level:nat -> Tot (option (skipList 'a))
+let tail sl level = 
+    match tl with 
+    |Mk v l a -> FStar.List.Tot.Base.nth (tls sl) level
+    |_ -> None    
 
 val isConsList: skipList 'a -> Tot bool
 let isConsList sl = 
@@ -74,18 +80,20 @@ let isConsList sl =
 
 (* we assume that skiplist could be represented as usual list*)
 (* tl_last will return the last element in lst*)
-val tl_lastC : sl:skipList 'a  ->Tot(skipList 'a)
-let tl_lastC sl = 
-    let lst = tls sl in  (* I am list of skipList of 'a *)
-    (* we assume that there is at least one element*)
-    let len = FStar.List.Tot.Base.length lst in
-    let elem = FStar.List.Tot.Base.nth lst len in get elem
+val tl_last: sl:list(skipList 'a){length sl > 0} -> Tot (skipList 'a)
+let tl_last sl = 
+    let l = FStar.List.Tot.Base.length sl in 
+    let elemLast = FStar.List.Tot.Base.nth sl l in get elemLast
 
+val lengthLL : sl:skipList 'a -> Tot (nat)
 let rec lengthLL sl = 
     match sl with 
     | Empty -> 0
-    | MkEmpty v l a -> 0
-    | Mk v l a -> 1
+    | MkEmpty v -> 0
+    | Mk v l a -> 
+    (* here -> it means that at least there is one element in list due to the properties
+    of contructor*)
+    1 + lengthLL (tl_last a)
 
 (*)
 (*length LL counts the quantity of elements as Linked List*)
