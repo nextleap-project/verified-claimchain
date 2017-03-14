@@ -100,12 +100,14 @@ let rec lengthLL sl =
         let lenCurrent = lengthLL elemLast in 1 + lenCurrent
     | _ -> 0
 
-val lengthTotal: skipList 'a -> Tot nat
-(*)
-val nth : skipList 'a  -> 'a
-
-val count: #a:eqtype -> a -> skipList a -> Tot nat
-
+val nth: sl: skipList 'a  -> n:nat ->  option('a) 
+let rec nth sl n = 
+    mathc sl with 
+    | Empty -> None
+    | MkEmpty v -> if n = 0 then Some v else None
+    | Mk v l a -> if n = 0 then Some v else nth (tl_last a) (n-1)
+    
+(*
 val append: skipList 'a -> skipList 'a -> Tot (skipList 'a)
 
 val appendElem: skipList 'a -> 'a -> Tot(skipList 'a)
