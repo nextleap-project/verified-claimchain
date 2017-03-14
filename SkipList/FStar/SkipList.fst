@@ -106,7 +106,25 @@ let rec nth sl n =
     | Empty -> None
     | MkEmpty v -> if n = 0 then Some v else None
     | Mk v l a -> if n = 0 then Some v else nth (tl_last a) (n-1)
-    
+
+val for_all: sl: skipList 'a ->  f: ('a -> Tot bool) -> Tot(option bool)
+let rec for_all sl f = 
+    match sl with
+        | Empty -> None
+        | MkEmpty v -> Some (f v)
+        | Mk v l a -> Some ((f v) && (for_all (tl_last a) f))    
+
+val cmp : #a:Type{isComparable a} -> v1 : a -> v2: a -> Tot bool
+let cmp v1 v2 = 
+    v1 > v2
+
+val isOrdered: sl:skipList    -> Tot bool
+let rec isOrdered sl =
+    match sl with 
+        | Empty -> true
+        | MkEmpty _ -> true
+        | Mk v l a -> cmp v (hd (tl_last a)) && isOrdered sl
+
 (*
 val append: skipList 'a -> skipList 'a -> Tot (skipList 'a)
 
