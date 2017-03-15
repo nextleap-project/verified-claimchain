@@ -124,6 +124,36 @@ let rec isOrdered sl =
         | Empty -> true
         | MkEmpty _ -> true
         | Mk v l a -> cmp v (hd (tl_last a)) && isOrdered sl
+        
+type searchResult = 
+| Exists: b : bool -> searchResult 
+| NextLeaf : sl : skipList 'a -> searchResult
+| EndOfSearch : searchResult
+
+val f : sl:list(skipList 'a) -> value: 'a -> Tot searchResult
+let rec f sl value = 
+	match sl with 
+	|hd::tl -> 	if hd == value then Exists 
+				else
+					(
+						match tl with 
+						| tl1 :: t2 -> (v h) >  value && (v tl1) < value then NextLeaf hd else f tl value
+						| [] -> EndOfSearch
+					)
+	| [] -> EndOfSearch				
+
+val f2: sl : skipList 'a -> value: 'a -> Tot bool
+let rec f2 sl value = 
+	match sl with 
+	| Empty -> false
+	| MkEmpty v -> if v = value then true else false
+	| Mk v l a -> if v = value then true else
+					let r = f a in 
+					match r with 
+						| Exists -> true
+						| NextLeaf l -> f2 l value
+						| EndOfSearch -> false        
+        
 
 (*
 val append: skipList 'a -> skipList 'a -> Tot (skipList 'a)
