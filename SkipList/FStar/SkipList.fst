@@ -163,3 +163,28 @@ val appendElem: skipList 'a -> 'a -> Tot(skipList 'a)
 (*val exists: skipList 'a -> 'a -> Tot bool*)
 
 *)
+
+
+val treeUpdate: lsl: list(skipList 'a) -> levelToUpdate: nat -> sl: skipList 'a -> list(skipList 'a)
+let treeUpdate lsl levelToUpdate sl =
+	let heightestLevel = FStar.List.Tot.length lsl in 
+	let rec upd lstTemp counter lst = 
+	(match counter with 
+		
+			|levelToUpdate -> FStar.List.Tot.append lst sl
+			|heightestLevel -> lst
+			|_ -> FStar.List.Tot.append lst (get(FStar.List.TOt.nth lstTemp counter))
+
+	);
+	upd (lstTemp) (counter +1)	
+
+let generateRandomInt
+
+val insert: sl: skipList 'a -> value: 'a -> skipList 'a
+let insert sl value = 
+match sl with 
+| Empty -> Mk value 
+| MkEmpty v -> let a = MkEmpty value in 
+			let b = Mk v 1 [a] in b
+| Mk v l a -> 			
+	
