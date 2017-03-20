@@ -9,9 +9,9 @@ let computeMaxLevel elements =
 type skipList 'a =
 |Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
 |MkRoot : skipList 'a
-
-type sca 'a =
-| Mk: memory : list ((option skipList 'a)* (option skipList 'a))
+type skipList 'a =
+|Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
+|MkRoot : skipList 'a
 
 type sca 'a = 
 | Mk : memoryFrom : list (option skipList 'a ) -> memoryTo : list (option skipList 'a )-> sca 'a
@@ -59,13 +59,35 @@ let buildLevelTree sl sca =
 	|Mk v l a -> if v < sl then scaReplaceSl else sca
 	|MkRoot -> sca
 
-val createLeaf : sca : sca 'a -> sl:skipList 'a ->value:'a ->  skipList 'a
+val generateA : memoryTo : list( option skipList 'a )->level:nat ->  sl:skipList{isRoot}-> list skipList 'a
+let generateA memoryTo level sl= 
+	let rec f c l= 
+ 	if c > level then l
+    else if c > (FStar.List.Tot.length memoryTo) then let l =  FStar.List.Tot.append l (get(FStar.List.Tot.nth)) in f (c+1) l 
+	else  let l = FStar.List.Tot.append l [sl]; f (c+1) l
+
+
+val getFirst: sl:skipList 'a{isMk} -> skipList 'a
+let getFirst sl = 
+	match  sl with
+	| Mk v l a -> FStar.List.nth a 0
+
+val getTail: sl:skipList 'a -> skipList 'a {isRoot}
+let getTail sl = 
+	let rec f sl= 
+	match sl with 
+	|Mk v l a -> f (getFirst a) 
+	|MkRoot -> sl
+
+val createLeaf : sca : sca 'a -> sl:skipList 'a ->value:'a -> level:nat-> skipList 'a
 let createLeaf sca sl value =
+	match sca with |Mk memoryFrom memoryTo ->let lstTo = generateA memoryTo level (getTail sl); Mk value (FStar.List.Tot.length lstTo) lstTo
+
 
 val insert: skipList 'a ->level:nat ->  skipList 'a
 let insert sl = 
 	let sca = generateSCA in 
 	let level = generateLevel level in 
 	match sl with 
-	| MkRoot -> createLeaf sca sl level
-	| Mk v l a -> let sca = buildLevelTree sl sca in createLeaf sca sl level
+	| MkRoot -> createLeaf sca sl value level
+	| Mk v l a -> let sca = buildLevelTree sl sca in createLeaf sca sl value level
