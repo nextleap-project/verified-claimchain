@@ -1,3 +1,8 @@
+module IntegerExpansion
+
+open FStar.List.Tot
+open FStar.Option
+
 private val temp_log : r: nat  -> n : nat  -> ML(nat)
 let rec temp_log r n = 
     if n >= (pow2 r) 
