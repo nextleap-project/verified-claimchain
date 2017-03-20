@@ -31,7 +31,7 @@ let generateSCA sca =
 assume val generateLevel: maxLevel : nat -> nat
 assume val buildLevelTree : sl: skipList 'a -> sca 'a -> sca 'a
 
-val scaReplace: f: option(skipList 'a) -> t: option (skipList 'a )->
+val scaReplace: f: option (skipList 'a)  -> t: option (skipList 'a) ->
 	level : nat -> sca: sca 'a -> sca 'a
 let scaReplace = 
  	match sca with 
@@ -39,6 +39,23 @@ let scaReplace =
  	let memoryFrom =  ListExpansion.replace memoryFrom f level in 
  	let memoryTo = ListExpansion.replace memoryTo f level in 
  	Mk memoryFrom memoryTo
+
+ val scaReplaceL: sl: skipList 'a{isMk} -> sca: sca 'a -> level: nat -> sca 'a
+ let scaReplaceL sl sca level = 
+ 	match sl with 
+ 	|Mk v l a ->
+ 		let level =  FStar.List.Tot.nth a level in 
+ 		scaReplace (Some sl) level level sca
+
+val scaReplaceSl : sl: skipList 'a{isMk}  ->level: nat -> sca: sca 'a -> sca 'a
+let scaReplaceSl sl level sca= 
+	match sl with 
+	|MK v l a -> 
+		let rec f c = 
+		let sca = 
+			if c > level then scaReplaceL sl sca level 
+		in f (c+1) in f 0
+
 
 val createLeaf : sca : sca 'a -> sl:skipList 'a ->value:'a ->  skipList 'a
 let createLeaf sca sl value =
