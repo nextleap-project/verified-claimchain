@@ -6,7 +6,6 @@ open IntegerExpansion
 val computeMaxLevel: elements: nat{elements > 1} -> Tot(nat)
 let computeMaxLevel elements = 
     IntegerExpansion.log2Tot elements
-
 type skipList 'a =
 |Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
 |MkRoot : skipList 'a
@@ -27,9 +26,7 @@ let generateSCA sca =
 	else
 		Mk lstFrom lstTo	
 
-
 assume val generateLevel: maxLevel : nat -> nat
-assume val buildLevelTree : sl: skipList 'a -> sca 'a -> sca 'a
 
 val scaReplace: f: option (skipList 'a)  -> t: option (skipList 'a) ->
 	level : nat -> sca: sca 'a -> sca 'a
@@ -56,10 +53,14 @@ let scaReplaceSl sl level sca=
 			if c > level then scaReplaceL sl sca level 
 		in f (c+1) in f 0
 
+val buildLevelTree : sl: skipList 'a -> sca 'a -> value : 'a-> sca 'a
+let buildLevelTree sl sca =
+	match sl with
+	|Mk v l a -> if v < sl then scaReplaceSl else sca
+	|MkRoot -> sca
 
 val createLeaf : sca : sca 'a -> sl:skipList 'a ->value:'a ->  skipList 'a
 let createLeaf sca sl value =
-
 
 val insert: skipList 'a ->level:nat ->  skipList 'a
 let insert sl = 
