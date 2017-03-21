@@ -6,9 +6,7 @@ open IntegerExpansion
 val computeMaxLevel: elements: nat{elements > 1} -> Tot(nat)
 let computeMaxLevel elements = 
     IntegerExpansion.log2Tot elements
-type skipList 'a =
-|Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
-|MkRoot : skipList 'a
+
 type skipList 'a =
 |Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
 |MkRoot : skipList 'a
