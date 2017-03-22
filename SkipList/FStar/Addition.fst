@@ -48,8 +48,21 @@ let scaReplaceSl sl level sca=
 	|MK v l a -> 
 		let rec f c = 
 		let sca = 
-			if c > level then scaReplaceL sl sca level 
+			if c > level then scaReplaceL sl sca level (*  c < l that was after MK!!!!*)
 		in f (c+1) in f 0
+
+(*val f1 : #a : eqtype ->  f:cmpL(a) -> lst: list(skipList a) -> value : a -> ML(searchResult a)
+let rec f1 #a f lst value = 
+match lst with 
+|hd::tl -> (match hd with 
+    | MkRoot -> f1 #a f tl value
+    | Mk v l a -> if ((f v value) = 1) then f1 f tl value (*MORE*)
+                  else if  ((f v value) = 0) then Exists hd (*EQUAL*)
+                  else NextLeaf hd) 
+| [] ->  NotExists   *)
+
+
+
 
 val buildLevelTree : sl: skipList 'a -> sca 'a -> value : 'a-> sca 'a
 let buildLevelTree sl sca =
