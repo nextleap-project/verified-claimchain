@@ -1,11 +1,8 @@
-module Test
+module AdditionSkipList    
 
-open IntegerExpansion
+open FStar.List.Tot
+open FStar.Option
 
-
-val computeMaxLevel: elements: nat{elements > 1} -> Tot(nat)
-let computeMaxLevel elements = 
-    IntegerExpansion.log2Tot elements
 
 type skipList 'a =
 |Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
@@ -13,6 +10,14 @@ type skipList 'a =
 
 type sca 'a = 
 | Mk : memoryFrom : list (option skipList 'a ) -> memoryTo : list (option skipList 'a )-> sca 'a
+
+type searchResult 'a= 
+| Exists: sl : skipList 'a -> searchResult 'a
+| NextLeaf : sl : skipList 'a -> searchResult 'a
+| NotExists : searchResult 'a
+
+
+assume val generateLevel: maxLevel : nat -> nat
 
 val generateSCA: level:nat -> sca 'a
 let generateSCA sca = 
@@ -24,8 +29,6 @@ let generateSCA sca =
 	else
 		Mk lstFrom lstTo	
 
-assume val generateLevel: maxLevel : nat -> nat
-
 val scaReplace: f: option (skipList 'a)  -> t: option (skipList 'a) ->
 	level : nat -> sca: sca 'a -> sca 'a
 let scaReplace = 
@@ -35,67 +38,52 @@ let scaReplace =
  	let memoryTo = ListExpansion.replace memoryTo f level in 
  	Mk memoryFrom memoryTo
 
- val scaReplaceL: sl: skipList 'a{isMk} -> sca: sca 'a -> level: nat -> sca 'a
- let scaReplaceL sl sca level = 
+val scaReplaceLeveled: sl: skipList 'a{isMk} -> sca: sca 'a -> level: nat -> sca 'a
+let scaReplaceL sl sca level = 
  	match sl with 
  	|Mk v l a ->
  		let level =  FStar.List.Tot.nth a level in 
  		scaReplace (Some sl) level level sca
 
-val scaReplaceSl : sl: skipList 'a{isMk}  ->level: nat -> sca: sca 'a -> sca 'a
-let scaReplaceSl sl level sca= 
+val updateSca : sl: skipList 'a{isMk}  ->level: nat -> sca: sca 'a -> sca 'a
+let updateSca sl level sca= 
 	match sl with 
 	|MK v l a -> 
 		let rec f c = 
 		let sca = 
-			if c > level then scaReplaceL sl sca level (*  c < l that was after MK!!!!*)
-		in f (c+1) in f 0
-
-(*val f1 : #a : eqtype ->  f:cmpL(a) -> lst: list(skipList a) -> value : a -> ML(searchResult a)
-let rec f1 #a f lst value = 
-match lst with 
-|hd::tl -> (match hd with 
-    | MkRoot -> f1 #a f tl value
-    | Mk v l a -> if ((f v value) = 1) then f1 f tl value (*MORE*)
-                  else if  ((f v value) = 0) then Exists hd (*EQUAL*)
-                  else NextLeaf hd) 
-| [] ->  NotExists   *)
+			if c > level then scaReplaceLeveled sl sca level (*  c < l that was after MK!!!!*);f (c+1) 
+		in f 0
 
 
+val func_temp : #a: eqtype -> comparatorInt: cmpL(a) ->  lst:list (skipList a) -> value : a ->level: nat->sca: sca a  ->  ML (tuple:(searchResult a * sca a))
+let rec func_temp #a comparatorInt lst value level sca=
+match lst with
+    |hd::tl -> (match hd with
+            | MkRoot -> func_temp comparatorInt tl value level sca
+            | Mk v l a -> let sca = updateSca hd level sca in if ((comparatorInt v value) = 1) then func_temp
+        comparatorInt tl value level sca (*MORE*)
+                          else if  ((comparatorInt v value) = 0) then ((Exists hd), sca) (*EQUAL*)
+                          else ((NextLeaf hd, sca))
+    | [] ->  (NotExists, sca)
+    
+val searchT: #a: eqtype -> comparatorInt:cmpL(a) -> sl: skipList a{isMk sl} -> value : a ->level: nat->sca: sca a  -> ML sca a
+let rec searchT #a comparatorInt sl value level sca=
+    match sl with
+    | Mk v l a -> let sr = func_temp comparatorInt a value level sca in (* only
+this -> clause*)
+    match (snd sr) with
+    | Exists sl -> (*idk *) sca 
+    | NotExists -> sca
+    | NextLeaf leaf -> searchT comparatorInt leaf value level sca (*NB : it
+returns NL iff in func_temp it is in Mk   *)
 
-
-val buildLevelTree : sl: skipList 'a -> sca 'a -> value : 'a-> sca 'a
-let buildLevelTree sl sca =
-	match sl with
-	|Mk v l a -> if v < sl then scaReplaceSl else sca
-	|MkRoot -> sca
-
-val generateA : memoryTo : list( option skipList 'a )->level:nat ->  sl:skipList{isRoot}-> list skipList 'a
-let generateA memoryTo level sl= 
-	let rec f c l= 
- 	if c > level then l
-    else if c > (FStar.List.Tot.length memoryTo) then let l =  FStar.List.Tot.append l (get(FStar.List.Tot.nth)) in f (c+1) l 
-	else  let l = FStar.List.Tot.append l [sl]; f (c+1) l
-
-
-val getFirst: sl:skipList 'a{isMk} -> skipList 'a
-let getFirst sl = 
-	match  sl with
-	| Mk v l a -> FStar.List.nth a 0
-
-val getTail: sl:skipList 'a -> skipList 'a {isRoot}
-let getTail sl = 
-	let rec f sl= 
+val buildLevelTree: #a : eqtype -> comparatorInt: cmpL(a) -> sl: skipList a-> value : a  -> level: nat -> sca: sca a -> sca a
+let buildLevelTree #a comparatorInt sl value  level sca= 
 	match sl with 
-	|Mk v l a -> f (getFirst a) 
-	|MkRoot -> sl
+	| MkRoot -> sca
+	| Mk v l a -> searchT comparatorInt sl value level sca
 
-val createLeaf : sca : sca 'a -> sl:skipList 'a ->value:'a -> level:nat-> skipList 'a
-let createLeaf sca sl value =
-	match sca with |Mk memoryFrom memoryTo ->let lstTo = generateA memoryTo level (getTail sl); Mk value (FStar.List.Tot.length lstTo) lstTo
-
-
-val insert: skipList 'a ->level:nat ->  skipList 'a
+val insert: #a : eqtype -> comparatorInt: cmpL(a) -> sl: skipList 'a ->  skipList 'a
 let insert sl = 
 	let sca = generateSCA in 
 	let level = generateLevel level in 
