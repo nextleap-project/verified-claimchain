@@ -54,20 +54,8 @@ this -> clause*)
     | NextLeaf leaf -> searchT comparatorInt leaf value (*NB : it
 returns NL iff in func_temp it is in Mk   *)
 
-(*)
-val searchT: sl: skipList 'a -> value : 'a -> ML bool
-let rec searchT sl value =
-    match sl with
-    | Mk v l a ->
-        let sr = f1 a value in
-        match sr with
-        |Exists sl -> true
-        |NotExists -> false
-        |NextLeaf leaf -> searchT leaf value
-
-
-val find: sl: skipList 'a -> value : 'a -> ML bool
-let find sl value =
+val find: #a: eqtype -> comparatorInt:cmpL(a) -> sl: skipList a -> value : a -> ML bool
+let find  #a comparatorInt sl value =
     match sl with
     | MkRoot -> false
-    | Mk v l a -> searchT sl value
+    | Mk v l a -> searchT comparatorInt sl value
