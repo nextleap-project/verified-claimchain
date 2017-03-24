@@ -19,18 +19,18 @@ type searchResult 'a=
 
 assume val generateLevel: maxLevel : nat -> nat
 
-val generateSCA: level:nat -> sca 'a
-let generateSCA sca = 
+val generateSCA: #a : eqtype ->  level:nat -> sca a
+let generateSCA leve = 
 	let rec f c lstFrom lstTo = 
-	if c > level then 
+	if c< level then 
 		let lstFrom = FStar.List.Tot.append lstFrom [None] in 
 		let lstTo = FStar.List.Tot.append lstTo [None] in 
 		f (c+1) lstFrom lstTo 
 	else
 		Mk lstFrom lstTo	
 
-val scaReplace: f: option (skipList 'a)  -> t: option (skipList 'a) ->
-	level : nat -> sca: sca 'a -> sca 'a
+val scaReplace: #a : eqtype ->  f: option (skipList a)  -> t: option (skipList a) ->
+	level : nat -> sca: sca a -> sca a
 let scaReplace = 
  	match sca with 
  	| Mk memoryFrom memoryTo ->
@@ -38,20 +38,20 @@ let scaReplace =
  	let memoryTo = ListExpansion.replace memoryTo f level in 
  	Mk memoryFrom memoryTo
 
-val scaReplaceLeveled: sl: skipList 'a{isMk} -> sca: sca 'a -> level: nat -> sca 'a
-let scaReplaceL sl sca level = 
+val scaReplaceLeveled: #a : eqtype ->  sl: skipList a{isMk} -> sca: sca a -> level: nat -> sca a
+let scaReplaceLeveled #a sl sca level = 
  	match sl with 
  	|Mk v l a ->
- 		let level =  FStar.List.Tot.nth a level in 
- 		scaReplace (Some sl) level level sca
+ 		let levelEl =  FStar.List.Tot.nth a level in 
+ 		scaReplace (Some sl) levelEl level sca
 
-val updateSca : sl: skipList 'a{isMk}  ->level: nat -> sca: sca 'a -> sca 'a
+val updateSca : #a : eqtype ->  sl: skipList a{isMk}  ->level: nat -> sca: sca a -> sca a
 let updateSca sl level sca= 
 	match sl with 
 	|MK v l a -> 
 		let rec f c = 
 		let sca = 
-			if c > level then scaReplaceLeveled sl sca level (*  c < l that was after MK!!!!*);f (c+1) 
+			if (c > level && c < l) then scaReplaceLeveled sl sca level (*  c < l that was after MK!!!!*);f (c+1) 
 		in f 0
 
 
