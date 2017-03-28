@@ -1,8 +1,6 @@
 module MerkleTree
 
-
-(* private let suint8_p  = Buffer.buffer suint8_t*)
-
+open HashFunction
 
 assume val concatHashes:fst: suint8_p{length fst = v hash_hashsize_256} -> 
 						snd : suint8_p{length snd = v hash_hashsize_256} -> 
@@ -11,7 +9,7 @@ assume val concatHashes:fst: suint8_p{length fst = v hash_hashsize_256} ->
 						(ensures fun h0 _ h1 -> live h1 fst /\ live h1 snd /\ live h1 result /\ modifies_1 result h0 h1 ))
 
 type MerkleTreeElement  = 
-| MerkleTreeRoot: hash: suint8_p{length hash = v hash_hashsize_256} -> 
+| MerkleTreeRoot:hf: hashFunction ->  hash: suint8_p{length hash = v hash_hashsize_256} -> 
 	leftLeaf: MerkleTreeElement  -> rightLeaf: MerkleTreeElement -> 
 	root: option(MerkleTreeElement) -> MerkleTreeElement 
 | MerkleTreeHashLeaf : leaf: MerkleTreeElement ->
