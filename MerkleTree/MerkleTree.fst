@@ -9,12 +9,18 @@ assume val concatHashes:fst: suint8_p{length fst = v hash_hashsize_256} ->
 						(ensures fun h0 _ h1 -> live h1 fst /\ live h1 snd /\ live h1 result /\ modifies_1 result h0 h1 ))
 
 type MerkleTreeElement  = 
-| MerkleTreeRoot:hf: hashFunction ->  hash: suint8_p{length hash = v hash_hashsize_256} -> 
+| MerkleTreeRoot:
+	hash: suint8_p{length hash = v lengthHash} -> 
 	leftLeaf: MerkleTreeElement  -> rightLeaf: MerkleTreeElement -> 
 	root: option(MerkleTreeElement) -> MerkleTreeElement 
-| MerkleTreeHashLeaf : leaf: MerkleTreeElement ->
-	hash: suint8_p{length hash = v hash_hashsize_256} -> root : MerkleTreeElement ->MerkleTreeElement 
-| MerkleTreeLeaf : element: suint8_p -> length : uint32_t{v len = length element} -> root: MerkleTreeElement -> MerkleTreeElement
+| MerkleTreeHashLeaf : 
+	leaf: MerkleTreeElement ->
+	hash: suint8_p{length hash = v lengthHash} -> 
+	root : MerkleTreeElement ->MerkleTreeElement 
+| MerkleTreeLeaf : 
+	element: suint8_p -> 
+	length : uint32_t{v len = length element} -> 
+	root: MerkleTreeElement -> MerkleTreeElement
 
 
 assume val equal: mt: MerkleTreeElement -> mt2 : MerkleTreeElement -> Tot (bool)
