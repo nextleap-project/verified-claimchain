@@ -11,7 +11,8 @@ assume val concatHashes:fst: suint8_p{length fst = v hash_hashsize_256} ->
 type MerkleTreeElement  = 
 | MerkleTreeRoot:
 	hash: suint8_p{length hash = v lengthHash} -> 
-	leftLeaf: MerkleTreeElement  -> rightLeaf: MerkleTreeElement -> 
+	leftLeaf: MerkleTreeElement  -> 
+	rightLeaf: option(MerkleTreeElement) -> 
 	root: option(MerkleTreeElement) -> MerkleTreeElement 
 | MerkleTreeHashLeaf : 
 	leaf: MerkleTreeElement ->
