@@ -2,6 +2,7 @@ module SkipListStatement
 
 open FStar.List.Tot
 open FStar.Option
+open HashFunction
 (*
 type skipList 'a = 
 | Empty: skipList 'a
@@ -10,21 +11,23 @@ type skipList 'a =
 
 type cmp (a:eqtype) = f:(a -> a -> Tot bool)
 
-type skipList 'a =
-|Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
-|MkRoot : skipList 'a
+type skipList (a:eqtype) =
+|Mk: value : a -> levels: int -> lst:list(skipList a) ->  -> skipList a
+|MkRoot : skipList a
 
-val isMk: skipList 'a -> Tot bool
-let isMk sl = 
+val isMk: #a: eqtype ->  skipList a -> Tot bool
+let isMk #a sl = 
 match sl with 
-|Mk v l a-> true 
+|Mk v l lst-> true 
 | _ -> false
 
-type skipListLeaf 'a = |Sls : a: skipList 'a {isMk a} -> skipListLeaf 'a
+(* <SkipListLeaf>*)
+type skipListLeaf (a:eqtype) = |Sls : el: skipList a {isMk el} -> skipListLeaf a
 
 val getSl: leaf: skipListLeaf 'a -> sl: skipList 'a{isMk sl}
 let getSl leaf = 
 match leaf with Sls a -> a
+(* </SkipListLeaf>*)
 
 val getL: leaf: skipList 'a {isMk leaf} -> 'a 
 let getL leaf = 
