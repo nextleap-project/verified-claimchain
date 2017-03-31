@@ -2,18 +2,24 @@ module SkipListStatement
 
 open FStar.List.Tot
 open FStar.Option
-(*open HashFunction*)
-(*
-type skipList 'a = 
-| Empty: skipList 'a
-| Mk: value : 'a -> levels : int{levels > 0}-> a: list(skipList 'a){length a = levels}-> skipList 'a
-*)
+open SkipListHashes
 
 type cmp (a:eqtype) = f:(a -> a -> Tot bool)
+(*)
+val hashF: #a: eqtype ->  value: a -> levels: FStar.UInt32.t -> lst:list(skipList a) -> hash:suint8_p-> suint8_p
+let hashF value levels lst hash 
+	= skipListHashes.hash #a value levels lst hash
 
+type skipList(a:eqtype) = 
+|Mk: value:a -> levels : FStar.UInt32.t -> 
+	 lst:list(skipList a) -> 
+	 hash:suint8_p{length hash = v lengthHashLocal && hash = hashF value levels lst }
+	  -> skipList a
+*)
 type skipList (a:eqtype) =
 |Mk: value : a -> levels: FStar.UInt32.t -> lst:list(skipList a)  -> skipList a
 |MkRoot : skipList a
+
 
 (*<Discriminators>*)
 val isMk: #a: eqtype ->  skipList a -> Tot bool
