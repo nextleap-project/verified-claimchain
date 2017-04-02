@@ -1,17 +1,8 @@
-module ExistsSkipList
+module SkipList.Exists
 
 open FStar.List.Tot
 open FStar.Option
-
-type skipList 'a =
-|Mk: value : 'a -> levels: int -> a:list(skipList 'a) -> skipList 'a
-|MkRoot : skipList 'a
-
-val isMk: skipList 'a -> Tot bool
-let isMk sl = 
-    match sl with 
-    |Mk v l a-> true 
-    | _ -> false
+open SkipList.Statement 
 
 type searchResult 'a=
 | Exists: sl : skipList 'a{isMk sl} -> searchResult 'a
@@ -22,9 +13,6 @@ type searchResult 'a=
 (forall a1 a2. (f a1 a2 /\ f a2 a1) ==> a1 = a2) (* anti-symmetry *)
 /\ (forall a1 a2 a3. f a1 a2 /\ f a2 a3 ==> f a1 a3) (* transitivity *)
 /\ (forall a1 a2. f a1 a2 \/ f a2 a1) (* totality *)*)
-
-type cmp (a:eqtype) = f:(a -> a -> Tot bool) (* Sorry Jonathan, I am not gonna prove this{total_order a f}*)
-type cmpL(a:eqtype) = f:(a -> a -> Tot int)
 
 val func_temp : #a : eqtype ->  comparatorInt:cmpL(a) -> lst:list(skipList a) -> value : a -> ML(searchResult a)
 let rec func_temp #a comparatorInt lst value =
