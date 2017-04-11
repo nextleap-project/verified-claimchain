@@ -1,0 +1,15 @@
+Merkle Tree properties.
+
+Addition. 
+-> Certificate Transaparency.
+
+We need to prove the following lemma. 
+
+Let's assume that we want to prove the correcntness of inclusion. Let's assume that we have state one and state two. Taken the leaf that previously existed (a) and computing the tree with some previous tree will get the evidence of correct inclusion. Such way we prove that the previous tree is the 
+
+
+We need firstly to prove that the previous tree is the subset of currecnt one. m + k = h(m+k). It proves the evidence 
+
+
+
+<erkle Tree consistency
