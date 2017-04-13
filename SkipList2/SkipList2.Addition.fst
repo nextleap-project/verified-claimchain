@@ -80,43 +80,53 @@ let current_place_gen #a #f sl level place  =
 
 
 (*NB: this sequnces are not total orders *)
-val update_indexes:#a: eqtype -> #f:cmp(a) ->  
+val _update_indexes:#a: eqtype -> #f:cmp(a) ->  
                 sl: skipList a f-> place: nat {place+1 < length sl} -> level: nat ->
                 counter : nat {counter < length sl} -> 
-                sequence_regenerated: seq(non_empty_list nat){Seq.length sequence_regenerated = length sl} -> ML(seq(non_empty_list nat))
-let rec update_indexes #a #f sl place level counter sequence_regenerated =
+                sequence_regenerated: seq(non_empty_list nat){Seq.length sequence_regenerated = length sl + 1} -> 
+                ML(r: seq(non_empty_list nat){Seq.length r = Seq.length sequence_regenerated })
+let rec _update_indexes #a #f sl place level counter sequence_regenerated =
     if counter = length sl then sequence_regenerated else (
         let indexes = getIndexes sl in 
             if counter < place then 
                 let treeNew =  tree_treatment_before (getIndex sl counter) level place in 
-                    update_indexes sl place level (counter+1) (sequence_change sequence_regenerated counter treeNew)
+                    _update_indexes sl place level (counter+1) (sequence_change sequence_regenerated counter treeNew)
             else if counter = place then 
                 let sequence_regenerated = sequence_change sequence_regenerated counter (current_place_gen sl level place) in 
                     if (counter + 1  = length sl) then 
                         sequence_regenerated (* completed*) 
                     else
-                        update_indexes sl place level (counter+1) sequence_regenerated 
+                        _update_indexes sl place level (counter+1) sequence_regenerated 
             else 
                 let treeNew = tree_treatment_after (getIndex sl counter) in  (**)
                 if (counter + 1 = length sl) then 
                     sequence_regenerated else
-                update_indexes sl place level (counter +1 ) (sequence_change  sequence_regenerated counter treeNew ))
+                _update_indexes sl place level (counter +1 ) (sequence_change  sequence_regenerated counter treeNew ))
 
 
+
+val shiftSequence: sequence_init: seq 'a{Seq.length sequence_init > 0} -> i: nat{Seq.length sequence_init > (i+1) } -> 
+                    value : 'a -> Tot(r: seq 'a{Seq.length r = Seq.length sequence_init +1 })
+let shiftSequence sequence_init i value= 
+    let first_part = Seq.slice sequence_init 0 i in (* length = i - 0*)
+    let second_part = Seq.create 1 value in (*length = 1 *)
+    let third_part = Seq.slice sequence_init (i) (Seq.length sequence_init) in (*length = length - i*)
+    let temp = (Seq.append first_part second_part) in 
+    Seq.append temp third_part
+
+val update_indexes: #a: eqtype -> #f: cmp(a) ->sl: skipList a  f -> place:nat {place + 1 < length sl} -> level:nat ->
+                        ML(r: seq (non_empty_list nat){Seq.length (getIndexes sl) +1 = Seq.length r  })
+
+let update_indexes #a #f sl place level = 
+    let sequence_init = getIndexes sl in 
+    let sequence_regenerated = shiftSequence sequence_init place [0] in 
+    _update_indexes sl place level 0 sequence_regenerated
+                
 (*)
-assume val update_indexes: #a: eqtype -> #f: cmp(a) -> seq_init: seq a -> 
-                        sl: skipList a  f -> Tot(r: seq a{Seq.length seq_init = Seq.length r })
-*)(*)
 assume val searchPlace : #a : eqtype -> #f: cmp(a) ->  comparator: (a-> a -> Tot int) -> el: a -> sl: skipList a f -> 
             Tot(r: nat {(r+1) < SkipList2.Statement.length sl
                  && comparator (Seq.index (getValues sl) (r-1)) el  = 1 && comparator (Seq.index (getValues sl) (r)) el  = -1})
-
-assume val inputIndex : #a : eqtype -> #f:cmp(a) -> 
-                    el : a ->sl:  skipList a f-> 
-                    place : nat{place<SkipList2.Statement.length sl} -> 
-                    Tot(r : seq a {
-                        Seq.length r = Seq.length(getIndexes sl)+1}
-                         )                
+            
                     
 assume val inputValue : #a : eqtype -> #f: cmp(a) ->
                     el : a -> sl: skipList a f -> 
