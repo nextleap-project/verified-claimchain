@@ -58,7 +58,7 @@ let tree_treatment_after lst_previous =
                 List.append prelist [hd+1] in     
     f2 prelist 0 lst_previous
 
-private val sl_search:#a: eqtype -> #f:cmp(a) ->  
+private val sl_search:#a: eqtype -> #f:cmp(a) -> 
             sl: skipList a f -> counter :nat{ SkipList2.Statement.length sl > counter}  -> 
             required_level: nat -> ML(nat)
 
@@ -67,18 +67,34 @@ let rec sl_search #a #f sl counter required_level =
     let length = List.length index in 
     if length >= required_level  
         then counter 
-    else if (counter+1 < SkipList2.Statement.length sl) then sl_search sl (counter +1 ) required_level else (SkipList2.Statement.length sl -1)
+    else if (counter+1 < SkipList2.Statement.length sl) 
+        then sl_search sl (counter +1 ) required_level 
+    else (SkipList2.Statement.length sl -1)
+
+private val sl_search2:#a: eqtype -> #f:cmp(a) ->  sl_origin_length : nat ->
+            sl: skipList a f {SkipList2.Statement.length sl  > 0}-> counter :nat  -> 
+            required_level: nat -> Tot(nat)(decreases(SkipList2.Statement.length sl))
+let rec sl_search2 #a #f sl_origin_length sl counter required_level = 
+    let index  = getCurrentIndex sl in 
+    let length = List.length index in 
+    if length >= required_level then counter
+    else if (SkipList2.Statement.length sl > 1)
+        then sl_search2 sl_origin_length (tl sl) (counter +1) required_level
+    else 
+        SkipList2.Statement.length sl -1 (* if the element is not found -> link to root *)
+
+
 
 (* place will be length -1 element - due to infinity at the end.  *)
 private val list_search :#a: eqtype -> #f:cmp(a) ->  sl : skipList a f -> 
 level: nat -> lst: (non_empty_list nat) -> counter : nat -> place : nat{(place+1) < SkipList2.Statement.length sl} 
 (*there exists AT LEAST ONE MORE ELEMENT*)->  ML(non_empty_list nat)
 let rec list_search #a #f sl level lst counter place=
-    if counter > level then 
-        lst 
+    if counter > level then lst 
     else 
-        let lst = List.append lst [(sl_search sl place counter)] in 
-            list_search sl level lst (counter+1) place
+        let elem = sl_search2 (SkipList2.Statement.length sl) sl place counter in
+        let lst = List.append lst [elem] in 
+        list_search sl level lst (counter+1) place
 
 private val current_place_gen :#a: eqtype -> #f:cmp(a) -> 
 sl: skipList a f -> level : nat -> place : nat {(place+1) <SkipList2.Statement.length sl  }
