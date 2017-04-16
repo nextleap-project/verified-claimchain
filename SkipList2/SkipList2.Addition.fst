@@ -1,9 +1,10 @@
 module SkipList2.Addition
 
 open FStar.Seq
-open FStar.List
 open SkipList2.Statement
 
+
+module List = FStar.List.Tot.Base
 
 type searchResult = 
 |Found: result: bool -> searchResult
@@ -27,26 +28,29 @@ let rec f lst counter lst_previous level place =
                     in f (List.append lst elem) (counter +1) tl level place
             |[] -> lst
 
-val tree_treatment_before : lst_previous: (non_empty_list nat) -> level:nat-> place : nat-> ML(non_empty_list nat)
+val tree_treatment_before : lst_previous: (non_empty_list nat) -> level:nat-> place : nat->
+    Tot(non_empty_list nat)(decreases(List.length lst_previous))
 let tree_treatment_before lst_previous level place =
     let prelist = [] in 
-    match lst_previous with |hd::tl -> 
+    match lst_previous with 
+    |hd::tl -> 
         let prelist = 
                 if hd = place (* counter > 0 by default*)
-                    then List.append prelist [hd+1] 
+                    then FStar.List.Tot.Base.append prelist [hd+1] 
                 else 
-                    List.append prelist [hd] 
+                    FStar.List.Tot.Base.append prelist [hd] 
         in 
-            f prelist 1 (FStar.List.tl lst_previous) level place
+            f prelist 1 (FStar.List.Tot.Base.tl lst_previous) level place
 
-private val f2: lst: (non_empty_list nat)  -> counter: nat -> lst_previous : list nat -> ML(non_empty_list nat)
+private val f2: lst: (non_empty_list nat)  -> counter: nat -> lst_previous : list nat -> 
+    Tot(non_empty_list nat)(decreases (List.length lst_previous))
 let rec f2 lst counter lst_previous =
         match lst_previous with
             |hd:: tl -> let elem = [hd + 1] 
                     in f2 (List.append lst elem) (counter +1) tl
             |[] -> lst
 
-val tree_treatment_after : lst_previous: (non_empty_list nat) -> ML(non_empty_list nat)
+val tree_treatment_after : lst_previous: (non_empty_list nat) -> Tot(non_empty_list nat)(decreases (List.length lst_previous))
 let tree_treatment_after lst_previous =
     let prelist = [] in 
         match lst_previous with |hd::tl ->
