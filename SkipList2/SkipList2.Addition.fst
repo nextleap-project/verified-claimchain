@@ -83,19 +83,20 @@ let rec sl_search2 #a #f sl_origin_length sl counter required_level =
     else 
         SkipList2.Statement.length sl -1 (* if the element is not found -> link to root *)
 
-
-
-(* place will be length -1 element - due to infinity at the end.  *)
+(* place will be length -1 element - due to infinity at the end.  *) 
 private val list_search :#a: eqtype -> #f:cmp(a) ->  sl : skipList a f -> 
-level: nat -> lst: (non_empty_list nat) -> counter : nat -> place : nat{(place+1) < SkipList2.Statement.length sl} 
-(*there exists AT LEAST ONE MORE ELEMENT*)->  ML(non_empty_list nat)
+level: nat -> 
+lst: (non_empty_list nat) -> 
+counter : nat{counter <= level} -> 
+place : nat{(place+1) < SkipList2.Statement.length sl} 
+->  Tot(non_empty_list nat)(decreases(level - counter))
 let rec list_search #a #f sl level lst counter place=
-    if counter > level then lst 
+    if counter >= level then lst
     else 
         let elem = sl_search2 (SkipList2.Statement.length sl) sl place counter in
         let lst = List.append lst [elem] in 
         list_search sl level lst (counter+1) place
-
+(*)
 private val current_place_gen :#a: eqtype -> #f:cmp(a) -> 
 sl: skipList a f -> level : nat -> place : nat {(place+1) <SkipList2.Statement.length sl  }
 -> ML(non_empty_list nat)
