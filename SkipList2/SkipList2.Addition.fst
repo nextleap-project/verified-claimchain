@@ -17,7 +17,8 @@ type searchResultDuo =
 val sequence_change: sq: seq 'a ->place: nat {Seq.length sq > place} -> value: 'a ->Tot (result: seq 'a{Seq.length sq = Seq.length result})
 let sequence_change #a sq place value = upd sq place value
 
-private val f: lst: (non_empty_list nat)-> counter: nat -> lst_previous :list nat -> level:nat -> place : nat -> ML(non_empty_list nat)
+private val f: lst: (non_empty_list nat)-> counter: nat -> lst_previous :list nat -> level:nat -> place : nat -> 
+Tot(non_empty_list nat)(decreases (List.length lst_previous))
 let rec f lst counter lst_previous level place =
         match lst_previous with
             |hd:: tl -> let elem =
