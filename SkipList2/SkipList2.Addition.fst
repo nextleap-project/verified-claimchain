@@ -8,7 +8,12 @@ open SkipList2.Statement
 type searchResult = 
 |Found: result: bool -> searchResult
 |NotFound: result : nat -> searchResult
-
+(*)
+type searchResultDuo = 
+|Found: result : bool -> searchResult
+|NotFound : result : nat -> searchResult
+|FoundAdd: val: 'a -> result : nat -> searchResult
+*)
 val sequence_change: sq: seq 'a ->place: nat {Seq.length sq > place} -> value: 'a ->Tot (result: seq 'a{Seq.length sq = Seq.length result})
 let sequence_change #a sq place value = upd sq place value
 
@@ -114,11 +119,6 @@ let shiftSequence sequence_init i value=
     let temp = (Seq.append first_part second_part) in 
     Seq.append temp third_part
 
-
-(*let rec sorted #a f s =
-  if length s <= 1
-  then true *)
-
 (*abstract val slice:  #a:Type -> s:seq a -> i:nat -> j:nat{i <= j && j <= length s} -> Tot (seq a) (decreases (length s)
 val slice_lemma : #a: eqtype -> #f:(cmp a) -> sequence_init : seq a {Seq.sorted f sequence_init}
 -> i: nat {0<= i &&  i <= Seq.length sequence_init}  -> 
@@ -140,40 +140,42 @@ val test: #a : eqtype -> #f: (a -> a -> Tot bool)  -> sequence_init : seq a{Seq.
 let test #a #f sequence_init i = 
     let a = Seq.slice sequence_init 0 i in a
 *)
- val shiftOrderedSequence : #a : eqtype -> #f: (a -> a -> Tot bool) -> 
-                            sequence_init : seq a {Seq.length sequence_init > 0 && Seq.sorted f sequence_init} -> 
-                            i: nat { i> 0 && Seq.length sequence_init > (i+1)} -> 
-                            value: a{
-                            f (Seq.index sequence_init i) value = false  && 
-                            f (Seq.index sequence_init (i+1)) value} -> Tot(r:seq a{Seq.sorted f r})
-let shiftOrderedSequence #a #f sequence_init i value = 
+
+assume val update_indexes: #a: eqtype -> #f:cmp(a) ->
+                            sequence_init : seq a {Seq.sorted f sequence_init}->
+                            value : a ->
+                            place: nat { place> 0 && 
+                                Seq.length sequence_init > (place+1) && 
+                                f (Seq.index sequence_init place) value = false &&
+                                f (Seq.index sequence_init (place+1)) value} ->
+                            Tot (r: seq a {Seq.sorted f r && Seq.length r = Seq.length sequence_init + 1})        
+
+
+(*let shiftOrderedSequence #a #f sequence_init i value = 
     let first_part = Seq.slice sequence_init 0 i in (* length = i - 0*)
     let second_part = Seq.create 1 value in (*length = 1 *)
     let third_part = Seq.slice sequence_init (i) (Seq.length sequence_init) in (*length = length - i*)
-    sequence_init            
-
+    sequence_init    *)        
+(*)
 val tl_lemma : #a: eqtype -> #f:(cmp a) -> sequence_init: seq a {Seq.length sequence_init> 1 && Seq.sorted f sequence_init} -> 
     Lemma(ensures (Seq.sorted f (Seq.tail sequence_init)))
 
 let tl_lemma #a #f sequence_init = ()
-
-val update_indexes: #a: eqtype -> #f: cmp(a) ->sl: skipList a  f -> place:nat {place + 1 < length sl} -> level:nat ->
-                        ML(r: seq (non_empty_list nat){Seq.length (getIndexes sl) +1 = Seq.length r  })
-
-let update_indexes #a #f sl place level = 
-    let sequence_init = getIndexes sl in 
-    let sequence_regenerated = shiftSequence sequence_init place [0] in 
-    _update_indexes sl place level 0 sequence_regenerated
+*)
                 
-(*)
-assume val searchPlace : #a : eqtype -> #f: cmp(a) ->  comparator: (a-> a -> Tot int) -> el: a -> sl: skipList a f -> 
-            Tot(r: nat {(r+1) < SkipList2.Statement.length sl
-                 && comparator (Seq.index (getValues sl) (r-1)) el  = 1 && comparator (Seq.index (getValues sl) (r)) el  = -1})
+assume val searchPlace : #a : eqtype -> #f: cmp(a)  -> value: a -> sl: skipList a f -> 
+                        Tot(place: nat { place> 0 && 
+                                Seq.length (getValues sl) > (place+1) && 
+                                f (Seq.index (getValues sl) place) value = false &&
+                                f (Seq.index (getValues sl) (place+1)) value} )
             
-*)            (*)    
-assume val inputValue : #a : eqtype -> #f: cmp(a) ->
-                    el : a -> sl: skipList a f -> 
-                    place : nat{place<SkipList2.Statement.length sl} ->
-                    Tot(r:seq a {FStar.Seq.Properties.sorted f r &&
-                    Seq.length r = Seq.length(getIndexes sl)+1 })
-let inputValue #a #f el sl place =
+
+val inputValue : #a : eqtype -> #f: cmp(a) -> sl: skipList a f ->  value : a ->
+                    Tot(r:seq a {Seq.sorted f r &&
+                    Seq.length r = Seq.length(getValues sl)+1 })
+
+let inputValue #a #f sl value =
+    let place = searchPlace value sl in 
+    let sequence_init = getValues sl in 
+    update_indexes #a #f sequence_init value place
+
