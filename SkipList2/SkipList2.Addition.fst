@@ -128,17 +128,23 @@ let shiftSequence sequence_init i value=
 assume val update_indexes: #a: eqtype -> #f:cmp(a) ->
                             sequence_init : seq a {Seq.sorted f sequence_init}->
                             value : a ->
-                            place: nat { place> 0 && 
+                            place: nat { 
                                 Seq.length sequence_init > (place+1) && 
-                                f (Seq.index sequence_init place) value = false &&
-                                f (Seq.index sequence_init (place+1)) value} ->
+                                f (Seq.index (getValues sl) place) value = true && 
+                                (
+                                	(i -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+                                )} ->
                             Tot (r: seq a {Seq.sorted f r && Seq.length r = Seq.length sequence_init + 1})        
                 
 assume val searchPlace : #a : eqtype -> #f: cmp(a)  -> value: a -> sl: skipList a f -> 
-                        Tot(place: nat { place> 0 && 
+                        Tot(place: nat { 
                                 Seq.length (getValues sl) > (place+1) && 
-                                f (Seq.index (getValues sl) place) value = false &&
-                                f (Seq.index (getValues sl) (place+1)) value} )
+                                f (Seq.index (getValues sl) place) value = true && 
+                                (
+                                	(i -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+                                )
             
 
 val inputValue : #a : eqtype -> #f: cmp(a) -> sl: skipList a f ->  value : a ->
