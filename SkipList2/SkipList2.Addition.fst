@@ -125,28 +125,6 @@ let shiftSequence sequence_init i value=
     let temp = (Seq.append first_part second_part) in 
     Seq.append temp third_part
 
-(*abstract val slice:  #a:Type -> s:seq a -> i:nat -> j:nat{i <= j && j <= length s} -> Tot (seq a) (decreases (length s)
-val slice_lemma : #a: eqtype -> #f:(cmp a) -> sequence_init : seq a {Seq.sorted f sequence_init}
--> i: nat {0<= i &&  i <= Seq.length sequence_init}  -> 
-        Lemma(ensures (Seq.sorted f (Seq.slice sequence_init i (Seq.length sequence_init))))
-        (decreases (Seq.slice sequence_init )) 
-
-let rec slice_lemma #a #f sequence_init i = 
-    match i with 
-    0 -> () 
-    | _ -> let i = i + 1 in if i = Seq.length sequence_init then () else slice_lemma sequence_init i+1
-
-*)
-(*)
-val test: #a : eqtype -> #f: (a -> a -> Tot bool)  -> sequence_init : seq a{Seq.sorted f sequence_init} 
--> i: nat { i> 0 && Seq.length sequence_init > (i+1)} 
--> Tot(r: seq a{Seq.sorted f r})
-
-
-let test #a #f sequence_init i = 
-    let a = Seq.slice sequence_init 0 i in a
-*)
-
 assume val update_indexes: #a: eqtype -> #f:cmp(a) ->
                             sequence_init : seq a {Seq.sorted f sequence_init}->
                             value : a ->
@@ -155,19 +133,6 @@ assume val update_indexes: #a: eqtype -> #f:cmp(a) ->
                                 f (Seq.index sequence_init place) value = false &&
                                 f (Seq.index sequence_init (place+1)) value} ->
                             Tot (r: seq a {Seq.sorted f r && Seq.length r = Seq.length sequence_init + 1})        
-
-
-(*let shiftOrderedSequence #a #f sequence_init i value = 
-    let first_part = Seq.slice sequence_init 0 i in (* length = i - 0*)
-    let second_part = Seq.create 1 value in (*length = 1 *)
-    let third_part = Seq.slice sequence_init (i) (Seq.length sequence_init) in (*length = length - i*)
-    sequence_init    *)        
-(*)
-val tl_lemma : #a: eqtype -> #f:(cmp a) -> sequence_init: seq a {Seq.length sequence_init> 1 && Seq.sorted f sequence_init} -> 
-    Lemma(ensures (Seq.sorted f (Seq.tail sequence_init)))
-
-let tl_lemma #a #f sequence_init = ()
-*)
                 
 assume val searchPlace : #a : eqtype -> #f: cmp(a)  -> value: a -> sl: skipList a f -> 
                         Tot(place: nat { place> 0 && 
