@@ -1,0 +1,137 @@
+module SkipList2.Addition.Test
+
+module SL =  SkipList2.Statement
+module List = FStar.List.Tot
+open SkipList2.Statement
+open FStar.Option
+open FStar.Seq
+open FStar.List.Tot
+
+type searchResult (a:eqtype) (f:cmp a)= 
+| Blank: searchResult a f 
+| NotFound: sl: skipList a f -> result : nat {result < SkipList2.Statement.length sl}-> searchResult a f 
+| Found: sl: skipList a f ->  value: a -> 
+	place: nat
+	{ 
+		place<Seq.length (getValues sl) && 
+		f (Seq.index (getValues sl) place) value && 
+		(place - 1 < 0 ||  f (Seq.index (getValues sl) (place-1)) value = false)
+	} -> searchResult a f 
+
+
+assume val lemma_indexes: #a:eqtype -> #f: (cmp a) -> sl : skipList a f -> counter: nat{counter < SL.length sl} -> 
+							Lemma (ensures (List.for_all (fun (x:nat) -> x < SL.length sl) (getIndex sl counter)) )
+
+
+assume val lemma_indexes3: #a: eqtype -> #f : (cmp a) -> sl: skipList a f-> 
+							Lemma (ensures (forall a. (List.for_all (fun (x:nat) -> x < SL.length sl) (getIndex sl a))))
+
+
+assume val lemma_indexes2: #a:eqtype -> #f: (cmp a) -> sl : skipList a f -> counter: nat{counter < SL.length sl} -> 
+							Lemma (ensures (List.for_all (fun (x:nat) -> x > 0 ) (getIndex sl counter) ))
+
+
+
+val test2 : #a: eqtype -> #f: (cmp a) -> sl: skipList a f  -> counter : nat {counter < SL.length sl}-> Tot(n: nat{n < SL.length sl})
+let test2 #a #f sl counter = lemma_indexes #a #f sl counter; List.hd (getIndex sl counter)
+
+private val temp_func: #a: eqtype -> #f: cmp a -> 
+						sl : skipList a f{SL.length sl > 0} -> 
+						value: a -> 	
+						counter: nat{counter >= 0 /\
+							counter < SL.length sl /\ 
+							(f (Seq.index (getValues sl) counter) value = false)} -> 
+						(*indexes: non_empty_list nat (* getIndexes sl counter*)
+						{
+						List.for_all (fun (x:nat) -> x < SL.length sl) indexes /\
+						List.for_all (fun (x:nat) -> x > counter)  indexes /\
+
+
+						List.for_all (fun (x:nat) -> x < (Seq.length (getValues sl))) indexes /\ 
+						List.index indexes ((List.length indexes)-1) < Seq.length(getValues sl) /\
+
+						Seq.index (getValues sl) (List.index indexes (List.length indexes-1)) = Seq.index (getValues sl) counter} -> 	
+						ML (option(place: nat{ 
+							place < Seq.length (getValues sl)  /\
+							f (Seq.index (getValues sl) place) value /\
+							(place - 1 < 0 \/  f (Seq.index (getValues sl) (place-1)) value = false)
+						}))*)
+(*)
+let rec temp_func #a #f sl counter indexes  value = 
+	let values = getValues sl in 
+	let index = List.hd indexes in 
+	if (f (Seq.index values index)value) then (*more*)
+		(
+			if (f (Seq.index values (index - 1)) value = false) then 
+				Some index
+			else if (List.length indexes = 1 ) (*the last element and all the elements are strictly bigger*)
+				List.nth (getIndex sl a) (List.length indexes)  = a +1
+			else None
+		)	
+	else None		
+
+(*)
+private val temp_func: #a: eqtype -> #f: cmp a ->sl:skipList a f ->  values : seq a {Seq.length values > 0} -> 
+						indexes : non_empty_list nat -> value: a -> ML(searchResult a f)
+
+let rec temp_func #a #f sl values indexes value = 
+	let counter = List.length indexes in 
+	if counter >= Seq.length values then Blank 
+		else (
+			if (f (Seq.index values counter) value =  true) (*strictly more*) 
+				then (
+					if (f(Seq.index values (counter-1)) value = false )
+						then Found sl value counter 
+					else 
+						Blank )
+			else Blank	
+			)	
+			(*)
+
+		else temp_func #a #f sl values (List.tl indexes) value)
+	else (f (Seq.index values counter) = false)
+		then NotFound sl counter
+
+(*)
+val search_ : #a: eqtype -> #f: cmp a -> sl: skipList a f{length sl > 0} -> value : a ->  counter: nat {counter < length sl} ->  
+Tot(place: nat { 
+                                Seq.length (getValues sl) > (place+1) && 
+                                f (Seq.index (getValues sl) place) value = true && 
+                                (
+                                	(i -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+)
+
+let rec search_ #a #f sl value counter= 
+	let values = getValues sl in 
+	let indexes = getIndex sl counter in 
+	let result = temp_func values indexes value in 
+	match result with 
+	| NotFound r -> search_ sl value counter 
+	| Found _ _ place -> place
+
+
+val search : #a: eqtype -> #f: cmp a -> sl: skipList a f {length sl > 0}-> value : a ->  
+Tot(place: nat { 
+                                Seq.length (getValues sl) > (place+1) && 
+                                f (Seq.index (getValues sl) place) value = true && 
+                                (
+                                	(i -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+)
+
+let search #a #f sl value = 
+	if (Seq.index (getValues sl) 0) value = true ) (*strictly more*) then 0 
+	else
+		search_ #a #f sl value 0                                
+
+
+assume val searchPlace : #a : eqtype -> #f: cmp(a)  -> value: a -> sl: skipList a f{length sl > 0} -> 
+                        Tot(place: nat { 
+                                Seq.length (getValues sl) > (place+1) && 
+                                f (Seq.index (getValues sl) place) value = true && 
+                                (
+                                	(i -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+)
+
