@@ -2,9 +2,40 @@ module SkipList2.Properties
 
 open FStar.Seq
 open FStar.Option
+open SkipList2.Statement
+module List = FStar.List.Tot
 
 type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
 
+(*)
+assume val lemma_index_1 : #a: eqtype -> #f:(cmp a) -> sl: skipList a f -> 
+	Lemma(ensures 
+		(forall (counter:nat{counter<(length sl)}). List.for_all (fun (x:nat) -> x < length sl) (getIndex sl counter)))
+*)
+
+assume val lemma_index_1: #a: eqtype -> #f: (cmp a) -> sl: skipList a f  -> 
+	Lemma(ensures
+		(forall (counter_global: nat {counter_global < length sl}) 
+		(counter_local : nat 
+			{counter_local <List.length
+				(getIndex sl counter_global)}). 
+		(fun (x: nat) -> x < length sl) (List.index(getIndex sl counter_global) counter_local)))
+
+assume val lemma_index_2: #a: eqtype -> #f: (cmp a) -> sl: skipList a f  -> 
+	Lemma(ensures
+		(forall (counter_global: nat {counter_global < length sl}) 
+		(counter_local : nat 
+			{counter_local <List.length
+				(getIndex sl counter_global)}). 
+		(fun (x: nat) -> x > counter_global) (List.index(getIndex sl counter_global) counter_local)))
+
+assume val lemma_index_3 : #a : eqtype -> #f:(cmp a) -> sl: skipList a f ->
+	Lemma(ensures
+		(forall (counter : nat {counter < (length sl - 1)}).
+				List.index (getIndex sl counter) (List.length (getIndex sl counter) -1 ) = (counter + 1)
+		)
+	)
+(*)
 val equal_whole_slice: #a: eqtype -> #f:(cmp a) ->
 			s:seq a {sorted f s} -> 
 			Lemma (ensures(equal (Seq.slice s 0 (Seq.length s)) s))
