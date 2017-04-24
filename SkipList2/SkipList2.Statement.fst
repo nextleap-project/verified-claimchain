@@ -35,9 +35,9 @@ val getValue: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  Seq.len
 let getValue #a #f sl nth = 
 	let values = getValues #a sl in Seq.index values nth
 
-val getCurrentValue: #a: eqtype -> #f:cmp(a) -> sl: skipList a f -> Tot(a)
-let getCurrentValue #a #f sl = 
-	getValue sl 0
+assume val getCurrentValue: #a: eqtype -> #f:cmp(a) -> sl: skipList a f -> Tot(a)
+(*let getCurrentValue #a #f sl = 
+	getValue sl 0*)
 
 val getIndex: #a:eqtype-> #f: cmp(a) -> sl:skipList a f-> nth : nat{nth <  Seq.length(getIndexes #a sl)} -> Tot(non_empty_list nat)
 let getIndex #a #f sl nth = 
@@ -172,9 +172,8 @@ val search : #a:eqtype ->  #f:cmp(a) -> sl: skipList a f -> value : a -> compara
 let search #a #f sl value comparator =
 	search_ #a #f sl value comparator 0
 
-
-val remove: #a:eqtype-> #f: cmp(a) ->sl: skipList a f-> Tot (skipList a f )
-val isOrdered: #a:eqtype-> #f: cmp(a) -> sl: skipList a f-> Tot(bool)
-val length: #a:eqtype-> #f: cmp(a) -> sl:skipList a f-> Tot(nat)
 val for_all: #a:eqtype-> #f: cmp(a) ->fnc:(a -> Tot bool) -> sl: skipList a f-> Tot (bool)
 *)
+
+
+
