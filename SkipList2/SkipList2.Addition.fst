@@ -125,15 +125,16 @@ let shiftSequence sequence_init i value=
     let temp = (Seq.append first_part second_part) in 
     Seq.append temp third_part
 
-assume val update_indexes: #a: eqtype -> #f:cmp(a) ->
+(*)
+assume val update_indexes: #a: eqtype -> #f:cmp(a) ->sl:skipList a f -> 
                             sequence_init : seq a {Seq.sorted f sequence_init}->
                             value : a ->
                             place: nat { 
                                 Seq.length sequence_init > (place+1) && 
                                 f (Seq.index (getValues sl) place) value = true && 
                                 (
-                                	(i -1) <0 || 
-                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+                                	(place -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false 
                                 )} ->
                             Tot (r: seq a {Seq.sorted f r && Seq.length r = Seq.length sequence_init + 1})        
                 
@@ -142,10 +143,13 @@ assume val searchPlace : #a : eqtype -> #f: cmp(a)  -> value: a -> sl: skipList 
                                 Seq.length (getValues sl) > (place+1) && 
                                 f (Seq.index (getValues sl) place) value = true && 
                                 (
-                                	(i -1) <0 || 
-                                	f (Seq.index (getValues sl) (place-1)) value = false} 
+                                	(place -1) <0 || 
+                                	f (Seq.index (getValues sl) (place-1)) value = false
                                 )
-            
+                                }
+                            )
+
+        
 
 val inputValue : #a : eqtype -> #f: cmp(a) -> sl: skipList a f ->  value : a ->
                     Tot(r:seq a {Seq.sorted f r &&
