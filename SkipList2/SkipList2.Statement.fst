@@ -25,6 +25,11 @@ let getValues #a #f sl =
 	match sl with 
 	| Mk v i -> v
 
+val length: #a: eqtype -> #f: cmp(a) -> sl: skipList a f -> Tot(nat)
+let length #a #f sl =
+	let values = getValues sl in 
+	Seq.length values		
+
 val getIndexes: #a : eqtype-> #f: cmp(a) -> sl:skipList a f -> Tot(seq(non_empty_list nat))
 let getIndexes #a #f sl = 
 	match sl with 
@@ -34,14 +39,18 @@ val getValue: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  Seq.len
 let getValue #a #f sl nth = 
 	let values = getValues #a sl in Seq.index values nth
 
-assume val getCurrentValue: #a: eqtype -> #f:cmp(a) -> sl: skipList a f -> Tot(a)
-(*let getCurrentValue #a #f sl = 
-	getValue sl 0*)
 
 val getIndex: #a:eqtype-> #f: cmp(a) -> sl:skipList a f-> nth : nat{nth <  Seq.length(getIndexes #a sl)} -> Tot(non_empty_list nat)
 let getIndex #a #f sl nth = 
 	let indexes = getIndexes #a sl in Seq.index indexes nth
 
+val getCurrentValue: #a: eqtype -> #f:cmp(a) -> sl: skipList a f{length sl > 0} -> Tot(a)
+let getCurrentValue #a #f sl = 
+	getValue #a #f sl 0
+
+val getCurrentIndex: #a : eqtype -> #f:cmp(a) -> sl : skipList a f{length sl > 0} -> Tot(non_empty_list nat)
+let getCurrentIndex #a #f sl = 
+	getIndex #a #f sl 0
 
 val getTuple: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  Seq.length(getIndexes #a sl)} -> Tot(a*list nat)
 let getTuple #a #f sl nth = 
@@ -71,11 +80,7 @@ let rec split_sized s1 s2 =
 		let s1 = snd(split s1 decrease) in 
 		let s2 = snd(split s2 decrease) in split_sized s1 s2 
 	else ()	
-
-val length: #a: eqtype -> #f: cmp(a) -> sl: skipList a f -> Tot(nat)
-let length #a #f sl =
-	let values = getValues sl in 
-	Seq.length values	
+	
 
 val tl : #a:eqtype-> #f: cmp(a) -> sl: skipList a f{length sl >1 } -> Tot(skipList a f) 
 let tl #a #f sl = 
