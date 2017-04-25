@@ -9,17 +9,13 @@ module List = FStar.List.Tot.Base
 type searchResult = 
 |Found: result: bool -> searchResult
 |NotFound: result : nat -> searchResult
-(*)
-type searchResultDuo = 
-|Found: result : bool -> searchResult
-|NotFound : result : nat -> searchResult
-|FoundAdd: val: 'a -> result : nat -> searchResult
-*)
-val sequence_change: sq: seq 'a ->place: nat {Seq.length sq > place} -> value: 'a ->Tot (result: seq 'a{Seq.length sq = Seq.length result})
+
+val sequence_change: sq: seq 'a ->place: nat {Seq.length sq > place} -> value: 'a ->
+                    Tot (result: seq 'a{Seq.length sq = Seq.length result})
 let sequence_change #a sq place value = upd sq place value
 
 private val f: lst: (non_empty_list nat)-> counter: nat -> lst_previous :list nat -> level:nat -> place : nat -> 
-Tot(non_empty_list nat)(decreases (List.length lst_previous))
+                    Tot(non_empty_list nat)(decreases (List.length lst_previous))
 let rec f lst counter lst_previous level place =
         match lst_previous with
             |hd:: tl -> let elem =
@@ -95,7 +91,7 @@ val _update_indexes:#a: eqtype -> #f:cmp(a) ->
                 sl: skipList a f-> place: nat {place+1 < length sl} -> level: nat ->
                 counter : nat {counter < length sl} -> 
                 sequence_regenerated: seq(non_empty_list nat){Seq.length sequence_regenerated = length sl + 1} -> 
-                ML(r: seq(non_empty_list nat){Seq.length r = Seq.length sequence_regenerated })
+                ML(r: seq(non_empty_list nat){Seq.length r = Seq.length sequence_regenerated }) 
 let rec _update_indexes #a #f sl place level counter sequence_regenerated =
     if counter = length sl then sequence_regenerated else (
         let indexes = getIndexes sl in 
@@ -125,8 +121,7 @@ let shiftSequence sequence_init i value=
     let temp = (Seq.append first_part second_part) in 
     Seq.append temp third_part
 
-(*)
-assume val update_indexes: #a: eqtype -> #f:cmp(a) ->sl:skipList a f -> 
+assume val update_values: #a: eqtype -> #f:cmp(a) ->sl:skipList a f -> 
                             sequence_init : seq a {Seq.sorted f sequence_init}->
                             value : a ->
                             place: nat { 
@@ -156,7 +151,12 @@ val inputValue : #a : eqtype -> #f: cmp(a) -> sl: skipList a f ->  value : a ->
                     Seq.length r = Seq.length(getValues sl)+1 })
 
 let inputValue #a #f sl value =
-    let place = searchPlace value sl in 
-    let sequence_init = getValues sl in 
-    update_indexes #a #f sequence_init value place
+    let place = searchPlace value sl in  (* + *)
+    let values = getValues sl in 
+    let values = update_values #a #f values value place in
+    let indexes = getIndexes sl in 
+    let indexes = shiftSequence place in 
+    let indexes =  _update_indexes indexes in 
+    Mk values indexes
+     (*  *)
 
