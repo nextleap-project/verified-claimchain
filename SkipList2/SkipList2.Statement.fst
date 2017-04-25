@@ -9,7 +9,6 @@ module List = FStar.List.Tot
 
 
 type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
-type cmpL(a:eqtype) = f:(a-> a -> Tot int)
 type non_empty_list 'a = lst: list 'a{Cons? lst}
 
 
@@ -146,16 +145,6 @@ Lemma
 (ensures exists b c. 
 	let r = temp_func #a comparator (getValues sl) (getIndex sl b) c in isNotFound r ==> notFound r < length sl )
 
-(*)
-assume val temp_func_lemma2: #a: eqtype -> #f: cmp(a)-> sl: skipList a f -> comparator : (a -> a -> Tot int) -> 
-Lemma
-(ensures exists b c.
-	let r1 = temp_func #a comparator (getValues sl) (getIndex sl b) c in 
-	let t = tl_countered (Some sl) b in 
-		isSome t && length(get t)> b  && isNotFound r1 
-
-	==> notFound r1 > 0)
-*)
 val search_: #a:eqtype-> #f: cmp(a) ->sl: skipList a f-> value : a -> comparator:(a -> a -> Tot int)-> r:nat{r < length sl}  -> 
 ML(bool)(decreases (length sl - r))
 let rec search_ #a #f sl value comparator r =
@@ -177,3 +166,19 @@ val for_all: #a:eqtype-> #f: cmp(a) ->fnc:(a -> Tot bool) -> sl: skipList a f-> 
 
 
 
+private val lst_z_g: lst: non_empty_list nat ->value_to_put: nat -> elements_number: nat -> counter : nat {counter <= elements_number}-> 
+	Tot(non_empty_list nat)(decreases (elements_number - counter))
+
+let rec lst_z_g lst value_to_put elements_number counter  = 
+	if (counter) = elements_number then lst else
+	let lst = List.append lst [value_to_put] in 
+	lst_z_g lst value_to_put elements_number (counter + 1) 
+
+val create : #a : eqtype -> #f:(cmp a ) -> value_max : a -> elements_number: nat {elements_number > 0} ->
+	Tot(sl: skipList a f {length sl > 0} )
+
+let create #a #f value_max elements_number = 
+	let seq_values = create #a 1 value_max in 
+	let lst_indexes = lst_z_g [0] 0 elements_number 0 in 
+	let seq_indexes = create 1 lst_indexes in 
+	Mk seq_values seq_indexes
