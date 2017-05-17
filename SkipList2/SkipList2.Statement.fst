@@ -187,3 +187,19 @@ let create #a #f value_max elements_number =
 	let lst_indexes = lst_z_g [0] 0 elements_number 0 in 
 	let seq_indexes = create 1 lst_indexes in 
 	Mk seq_values seq_indexes
+
+
+
+val last_element_indexed: #a: eqtype -> #f: cmp a -> sl: skipList a f {length sl > 1} -> 
+							counter_global: nat{counter_global < (length sl -1)} -> 
+		Tot nat 
+let last_element_indexed #a #f sl counter_global = 
+	let ind = getIndex sl counter_global in 
+	let len = (List.length ind) -1  in 
+	List.index ind len
+
+val last_element_values: #a: eqtype -> #f: cmp a -> sl: skipList a f {length sl > 1} -> Tot(a)
+let last_element_values #a #f sl = 
+	let values = getValues sl in 
+	let length = Seq.length values -1 in 
+	Seq.index values length 
