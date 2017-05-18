@@ -17,21 +17,26 @@ type searchResult (a:eqtype) (f:cmp a) (sl: skipList a f) (value: a) (counter_gl
 		{
 		counter_global > counter_global_previous /\
 		counter_global < (Sl.length sl -1) /\ 
-		(f (Seq.index (getValues sl) (counter_global)) value)
+		(f (getValue sl counter_global) value)
 		}
 	-> searchResult a f sl value counter_global_previous
 | Found:  
 	place: nat
 		{ 
 			(place+1) < Sl.length sl /\
-			(f value (Seq.index (getValues sl) (place+1))) /\
-			(f (Seq.index (getValues sl) place) value)
+			(f value (getValue sl (place +1))) /\
+			(f (getValue sl place) value)
 		}
 	 -> searchResult a f sl value counter_global_previous
 
+
+val seqLast: s: seq 'a {Seq.length s > 0}-> Tot 'a
+let seqLast s = 
+	(Seq.index s (Seq.length s -1))
+
 val tail_mem : 	#a : eqtype -> #f: cmp a -> 
 			pivot : a -> 
-			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ Seq.mem pivot  s = false /\ f (Seq.index s (Seq.length s -1)) pivot } ->
+			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ Seq.mem pivot  s = false /\ f (seqLast s) pivot } ->
 			Lemma (ensures (forall y. (Seq.mem y s ==> f y pivot)))(decreases (Seq.length s))
 
 let rec tail_mem #a #f pivot s = 
@@ -42,7 +47,7 @@ val tail_mem_wrapper: #a : eqtype ->
 			#f: cmp a -> 
 			pivot : a -> 
 			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ 
-					Seq.mem pivot  s = false /\ f (Seq.index s (Seq.length s -1)) pivot } -> 
+					Seq.mem pivot  s = false /\ f (seqLast s) pivot } -> 
 			Tot(r: seq a {(forall y. (Seq.mem y r ==> f y pivot))})
 
 let tail_mem_wrapper #a #f pivot s = 
@@ -177,7 +182,7 @@ val change_values: #a: eqtype -> #f: cmp a -> value : a -> sl: skipList a f{Sl.l
 			}->
 		Tot(s3: seq a{Seq.sorted f s3 /\ Seq.length s3 = Sl.length sl+ 1 
 	}) 
-
+(*)
 (*Tot(r: seq a {(forall y. (Seq.mem y r ==> f pivot y ))})*)
 let change_values #a #f value sl place = 
 	let s = getValues sl in 
