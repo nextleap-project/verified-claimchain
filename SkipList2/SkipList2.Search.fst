@@ -118,27 +118,33 @@ let exist #a #f sl element =
     | None -> false
     | Some _ -> true
 
-val _forall: listFrom : list nat -> listTo: list nat -> 
-        predicate: (nat -> Tot bool) -> pred_yes: (nat -> Tot nat) -> pred_no : (nat -> Tot nat) -> Tot(list nat)
-let rec _forall listFrom listTo predicate pred_yes pred_no = 
+val _forall: listFrom : list nat -> predicate: (nat -> Tot bool) -> pred_yes: (nat -> Tot nat) -> pred_no : (nat -> Tot nat) -> 
+            Tot(r: list nat{List.length listFrom = List.length r})
+
+let rec _forall listFrom predicate pred_yes pred_no = 
     match listFrom with 
-    | hd::tl -> let elem = if predicate hd then pred_yes hd else pred_no hd in 
-                let listTo = List.append listTo [elem] in _forall tl listTo predicate pred_yes pred_no 
-    | [] -> listTo        
+    | [] -> []
+    | a::tl -> let elem = if predicate a then pred_yes a 
+                else pred_no a in elem :: 
+                _forall tl predicate pred_yes pred_no 
 
-val seqRegeneration:sFrom: seq (list nat){Seq.length sFrom > 0} ->  sTo: seq (list nat) -> 
-                    compare: nat ->change : nat ->  
-                    ML(r: seq (list nat))
+val _list_tr : listFrom : list nat-> compare: nat ->change : nat  -> 
+        Tot(listTo: list nat{List.length listFrom = List.length listTo})
 
-let rec seqRegeneration sFrom sTo compare change =
-    let listTo = [] in 
-    let listFrom = Seq.head sFrom in 
+let _list_tr listFrom compare change = 
     let predicate = (fun x -> x < compare) in 
     let predicate_yes = (fun x -> x) in 
     let predicate_no = (fun x -> change) in 
-    let listTo = _forall listFrom listTo predicate predicate_yes predicate_no in 
-    let temp = Seq.create 1 listTo in
-    let sTo =  Seq.append sTo temp in 
-        if Seq.length sFrom > 0
-            then seqRegeneration sFrom sTo compare change
-        else sTo       
+    _forall listFrom predicate predicate_yes predicate_no
+
+val seqRegeneration:sFrom: seq (list nat){Seq.length sFrom > 0}  -> i: nat {i <= Seq.length sFrom} -> 
+                    compare: nat ->change : nat ->  
+                    Tot(r: seq (list nat) {Seq.length sFrom = Seq.length r})(decreases(Seq.length sFrom - i))
+
+(* *abstract val upd: #a:Type -> s:seq a -> n:nat{n < length s} -> a ->  Tot (seq a) (decreases (length s))*)
+let rec seqRegeneration sFrom i compare change =
+    if (i < Seq.length sFrom) then 
+        let elem = _list_tr (Seq.index sFrom i) compare change in 
+        let s = Seq.upd sFrom i elem in seqRegeneration s (i+1) compare change
+    else 
+        sFrom   
