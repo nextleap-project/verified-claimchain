@@ -2,7 +2,7 @@ module SkipList2.Statement
 
 open FStar.Seq
 open FStar.Option
-
+open SkipList2.Seq.Properties
 
 module Seq = FStar.Seq.Base
 module List = FStar.List.Tot
@@ -11,13 +11,10 @@ module List = FStar.List.Tot
 type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
 type non_empty_list 'a = lst: list 'a{Cons? lst}
 
-
-
 type skipList(a:eqtype) (f:cmp a) = 
 | Mk:  values: seq(a){sorted f values}-> 
 indexes : seq(non_empty_list nat)
 {Seq.length values = Seq.length indexes} -> skipList a f 
-
 
 
 val getValues : #a: eqtype -> #f: cmp(a)-> sl:skipList a f-> Tot(seq a)
@@ -111,65 +108,6 @@ val tlcountered: #a: eqtype -> #f:cmp(a) -> sl: skipList a f ->
 let rec tlcountered #a #f sl counter = 
 	if counter = 0 then sl else
     tlcountered (tl sl) (counter -1)
-
-type searchResult = 
-|Found: result: bool -> searchResult
-|NotFound: result : nat -> searchResult
-
-private val isNotFound:  sr: searchResult -> Tot(bool)
-let isNotFound sr = 
-	match  sr with
-	| NotFound _-> true
-	| _ -> false
-
-private val notFound: sr: searchResult{isNotFound sr} -> Tot(nat)
-let notFound sr = 
-	match sr with NotFound a -> a	
-
-private val temp_func: #a:eqtype ->comparator : (a -> a -> Tot int) -> 
-						values: seq(a){Seq.length values > 0} -> 
-						indexes: non_empty_list nat -> 
-						value : a -> 
-						Tot(searchResult)(decreases (List.length indexes))
-
-let rec temp_func #a comparator values indexes value = 
-				let counter = FStar.List.Tot.length indexes in 
-				if counter >= Seq.length values then (*!!!!!!!!!!!!!!!*)
-					Found false 
-				else
-					if (comparator(Seq.index values counter) value =1) 
-						then (if List.length indexes = 1  then (Found false) 
-								else let lst = List.tl indexes 
-									in  temp_func comparator values lst value)
-					else if (comparator (Seq.index values counter) value = 0 )
-						then (Found true)
-					else  (NotFound counter)
-
-assume val temp_func_lemma: #a: eqtype -> #f: cmp(a)-> sl: skipList a f -> comparator : (a -> a -> Tot int) -> 
-Lemma
-(ensures exists b c. 
-	let r = temp_func #a comparator (getValues sl) (getIndex sl b) c in isNotFound r ==> notFound r < length sl )
-
-val search_: #a:eqtype-> #f: cmp(a) ->sl: skipList a f-> value : a -> comparator:(a -> a -> Tot int)-> r:nat{r < length sl}  -> 
-ML(bool)(decreases (length sl - r))
-let rec search_ #a #f sl value comparator r =
-	let values = getValues sl in 
-		if Seq.length values <= 0 then false 
-		else 
-			let indexes = getIndex sl r in 
-			let result = temp_func comparator values indexes value in 
-				match result with 
-				|Found r -> r 
-				|NotFound r -> if (r < length sl ) then search_ sl value comparator r else false
-			(*)
-val search : #a:eqtype ->  #f:cmp(a) -> sl: skipList a f -> value : a -> comparator: cmpL(a) -> ML(bool)
-let search #a #f sl value comparator =
-	search_ #a #f sl value comparator 0
-
-val for_all: #a:eqtype-> #f: cmp(a) ->fnc:(a -> Tot bool) -> sl: skipList a f-> Tot (bool)
-*)
-
-
 
 private val lst_z_g: lst: non_empty_list nat ->value_to_put: nat -> elements_number: nat -> counter : nat {counter <= elements_number}-> 
 	Tot(non_empty_list nat)(decreases (elements_number - counter))

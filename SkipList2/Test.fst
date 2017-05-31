@@ -7,20 +7,6 @@ module List = FStar.List.Tot
 module Sl = SkipList2.Statement
 
 
-assume val temp_lemma_split: #a : eqtype -> #f: cmp a -> pivot : a -> s: seq a 
-								{Seq.sorted f s /\ Seq.length s > 0 /\ 
-								Seq.mem pivot  s = false} ->
-								place : nat {place < Seq.length s} -> 
-								Lemma (ensures 
-									( 
-										(Seq.sorted f (fst(Seq.split s place))) /\ 
-										(Seq.length (fst(Seq.split s place)) > 0) /\
-										(Seq.mem pivot (fst(Seq.split s place)) = false) /\
-										(Seq.sorted f (snd(Seq.split s place))) /\ 
-										(Seq.length (snd(Seq.split s place)) > 0) /\
-										(Seq.mem pivot (snd(Seq.split s place)) = false) 
-								))
-
 val seqLast: s: seq 'a{Seq.length s > 0} -> Tot('a)
 let seqLast s = let len = Seq.length s in Seq.index s (len -1)
 
@@ -110,13 +96,17 @@ let ordered_addition_r #a #f pivot s2 =
 		let s1 = Seq.createEmpty in 
 		sorted_seq_concat_wrapper #a #f pivot s1 s2 
 
+
 val lemma_temp1: #a: eqtype -> #f: cmp a -> s: seq a{Seq.sorted f s} -> pl: nat {pl < Seq.length s -1} ->
 				Lemma(ensures(f (Seq.index s pl ) (Seq.index s (pl+1))))
 
-let lemma_temp1 #a #f s pl = if pl = 0 then () else admit()
+let lemma_temp1 #a #f s pl = admit()
+
+
+
 
 val lemma_temp: #a : eqtype -> #f: cmp a -> place: nat{place > 0}-> 
-					s: seq a {Seq.sorted f s /\ place < Seq.length s -1} -> 
+					s: seq a {Seq.sorted f s /\ place <= Seq.length s -1} -> 
 					Lemma
 						(requires
 							(Seq.sorted f (fst (Seq.split s place))))
@@ -130,21 +120,71 @@ let lemma_temp #a #f place s =
 	let element = Seq.index s place in 
 	lemma_temp1 #a #f s (place-1);
 	ordered_l_lemma3 #a #f element splitted_seq;
-	assert(Seq.eq (Seq.snoc splitted_seq element) (fst(Seq.split s (place+1))) = true)
+	assert(Seq.eq (Seq.  splitted_seq element) (fst(Seq.split s (place+1))) = true)
 
-val lemma_left_split_sorted: #a: eqtype -> #f: cmp a -> place: nat ->  
-							s: seq a {Seq.sorted f s /\ place < Seq.length s - 1} ->
+val lemma_left_split_sorted: #a: eqtype -> #f: cmp a -> place: nat{place > 0} ->  
+							s: seq a {Seq.sorted f s /\ place <= Seq.length s} ->
 							Lemma(ensures (Seq.sorted f (fst (Seq.split s place)))) 
 
-let rec lemma_left_split_sorted #a #f place s =  
-	if place = 1 then () else admit()
 
+let rec lemma_left_split_sorted #a #f place s =  
+	if (place = 1) then begin
+		assert(Seq.sorted f (fst (Seq.split s (place))));
+		lemma_temp #a #f place s;
+		assert(Seq.sorted f (fst (Seq.split s (place+1))))
+		end
+	else 
+		lemma_left_split_sorted #a #f (place -1) s; 
+		lemma_temp #a #f (place - 1) s
+
+	(*)
 val lemma_right_split_sorted: #a : eqtype -> #f : cmp a -> place : nat -> 
 						s: seq a {Seq.sorted f s /\ place < Seq.length s - 1} -> 
 						Lemma (ensures (Seq.sorted f (snd (Seq.split s place))))
 
 let rec lemma_right_split_sorted #a #f place s = 
 	if place = Seq.length s then () else admit() 
+
+
+val lemma_length_split_left : #a: eqtype -> #f: cmp a -> place : nat  -> 
+						s: seq a{place > 0 /\ place < Seq.length s - 1} -> 
+						Lemma(ensures (Seq.length (fst (Seq.split s place)) > 0))
+
+let lemma_length_split_left #a #f place s = ()
+
+
+val lemma_length_split_right : #a: eqtype -> #f: cmp a -> place : nat  -> 
+						s: seq a{place > 0 /\ place < Seq.length s - 1} -> 
+						Lemma(ensures (Seq.length (snd (Seq.split s place)) > 0))
+
+let lemma_length_split_right #a #f place s = ()
+
+val lemma_mem_left : #a : eqtype -> #f: cmp a -> pivot: a ->  place : nat -> 
+					s: seq a {place > 0 /\ place < Seq.length s -1 /\ Seq.mem pivot  s = false} ->
+					Lemma (ensures (Seq.mem pivot (fst (Seq.split s place))))
+
+let lemma_mem_left #a #f pivot place s = 
+	if place = 0 then () else admit()
+
+val lemma_mem_right : #a : eqtype -> #f: cmp a -> pivot: a ->  place : nat -> 
+					s: seq a {place > 0 /\ place < Seq.length s -1 /\ Seq.mem pivot  s = false} ->
+					Lemma (ensures (Seq.mem pivot (snd (Seq.split s place))))
+
+let lemma_mem_right #a #f pivot place s = admit()
+
+assume val temp_lemma_split: #a : eqtype -> #f: cmp a -> pivot : a -> s: seq a 
+								{Seq.sorted f s /\ Seq.length s > 0 /\ 
+								Seq.mem pivot  s = false} ->
+								place : nat {place < Seq.length s} -> 
+								Lemma (ensures 
+									( 
+										(Seq.sorted f (fst(Seq.split s place))) /\ 
+										(Seq.length (fst(Seq.split s place)) > 0) /\
+										(Seq.mem pivot (fst(Seq.split s place)) = false) /\
+										(Seq.sorted f (snd(Seq.split s place))) /\ 
+										(Seq.length (snd(Seq.split s place)) > 0) /\
+										(Seq.mem pivot (snd(Seq.split s place)) = false) 
+								))
 
 
 

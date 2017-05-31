@@ -3,11 +3,10 @@ module SkipList2.Properties
 open FStar.Seq
 open FStar.Option
 open SkipList2.Statement
+open SkipList2.Seq.Properties
+
 module List = FStar.List.Tot
 module Sl = SkipList2.Statement
-
-type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
-
 
 assume val lemma_last_element_biggest: #a : eqtype -> #f: cmp(a)  ->  sl: skipList a f{Sl.length sl > 1} -> value: a
 -> Lemma (ensures (f value (last_element_values  #a #f sl)))	
