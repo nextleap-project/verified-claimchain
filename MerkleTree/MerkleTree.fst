@@ -1,65 +1,59 @@
 module MerkleTree
 
 open HashFunction
+open FStar.Seq
+open FStar.Option
 
-assume val concatHashes:fst: suint8_p{length fst = v hash_hashsize_256} -> 
-						snd : suint8_p{length snd = v hash_hashsize_256} -> 
-						result : suint8_p{length result = length fst + length snd} -> 
-						Stack unit (requires (fun h0 -> live h0 fst /\ like h0 snd))
-						(ensures fun h0 _ h1 -> live h1 fst /\ live h1 snd /\ live h1 result /\ modifies_1 result h0 h1 ))
+type hash = seq nat
+type data = seq nat
 
-type MerkleTreeElement  = 
-| MerkleTreeRoot:
-	hash: suint8_p{length hash = v lengthHash} -> 
-	leftLeaf: MerkleTreeElement  -> 
-	rightLeaf: option(MerkleTreeElement) -> 
-	root: option(MerkleTreeElement) -> MerkleTreeElement 
-| MerkleTreeHashLeaf : 
-	leaf: MerkleTreeElement ->
-	hash: suint8_p{length hash = v lengthHash} -> 
-	root : MerkleTreeElement ->MerkleTreeElement 
-| MerkleTreeLeaf : 
-	element: suint8_p -> 
-	length : uint32_t{v len = length element} -> 
-	root: MerkleTreeElement -> MerkleTreeElement
+type merkleTree: level:nat -> h: hash -> Type  = 
+| MLeaf: element : data -> merkleTree 0 (hashFunc element)
+| MNode: #level: nat -> #h1: hash -> #h2 : hash -> 
+        lnode: merkleTree level h1 ->
+        rnode: option(merkleTree level h2) -> 
+        merkleTree (level+1) (hashConcat h1 h2)
+
+type stack  = 
+| Mk : element : seq nat -> len: nat {len = Seq.length element} -> stack 
 
 
-assume val equal: mt: MerkleTreeElement -> mt2 : MerkleTreeElement -> Tot (bool)
+val get_elem: st: stack -> seq nat
+let get_elem st = 
+    match st with 
+    | Mk a _ -> a
 
-val isRoot: mt: MerkleTreeElement -> Tot(bool)
-let isRoot mt = 
-	match mt with 
-	| MerkleTreeRoot _ _ _ _ -> true
-	| _ -> false
+val get_len_stack : st: stack -> nat
+let get_len st = 
+    match st with 
+    | Mk _ l -> l
 
-val isHashLeaf: mt: MerkleTreeElement -> Tot(bool)
-let isHashLeaf mt = 
-	match mt with 
-	| MerkleTreeHashLeaf _ _ _ -> true
-	| _ -> false
+val push: st: stack -> el: nat-> Tot stack
+let push st el = 
+    match st with 
+    |Mk s l -> Mk (Seq.snoc s el) (l +1)
 
-val isTreeLeaf: mt: MerkleTreeElement -> Tot(bool)
-let isTreeLeaf mt = 
-	match mt with 
-	|MerkleTreeLeaf _ _ _ -> true
-	| _ -> false
+val pop : st: stack  -> Tot stack
+let pop st = st
+    (*match st with 
+    | Mk s l -> Mk (Seq.tail s) (l - 1) *)
 
-val getRoot : mt : MerkleTreeElement{isTreeLeaf mt || isHashLeaf mt} -> Tot(MerkleTreeElement)
-let getRoot mt = 
-	match mt with 
-	|MerkleTreeLeaf _ _ root -> root
-	| MerkleTreeHashLeaf _ _ root -> root
 
-val TreeLeafHash : leaf: MerkleTreeElement{isTreeLeaf leaf} -> root : MerkleTreeElement{isHashLeaf root /\ equal(getRoot length) (root) } -> 
+val path_gen :treeLength: nat ->  #l1 : nat -> 
+    #h1: hash -> m: merkleTree l1 h1{l1 <= treeLength}  -> #h2: hash -> m2 : option(merkleTree l1 h2) ->
+    st: stack{get_len st = treeLength - l1} -> element : data -> ML((r:bool) * (st:stack))(decreases (l1))
 
-(*)
-val sha2_256:
-  hash :suint8_p{length hash = v hash_hashsize_256} ->
-  input:suint8_p ->
-  len  :uint32_t{v len = length input} ->
-  Stack unit
-        (requires (fun h0 -> live h0 hash /\ live h0 input))
-        (ensures  (fun h0 _ h1 -> live h1 hash /\ modifies_1 hash h0 h1))
-(*)
-
+let rec path_gen treeLength #l1 #h1 m #h2 m2 st element = 
+    match m with 
+    |MLeaf a -> if a = element then (true, st) else let st = pop st in  (false, st)
+    |MNode lnode rnode -> 
+        let st = push st 0 in 
+        let r = path_gen treeLength lnode rnode st element in 
+        match r with 
+        |(true, st) -> (true, st)
+        |(false, st) -> 
+            match m2 with 
+                |None ->let st = pop st in  (false, st)                           
+                |Some el -> let st = push st 1 in
+                path_gen treeLength el None st element
 
