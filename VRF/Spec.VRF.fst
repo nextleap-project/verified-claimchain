@@ -111,7 +111,6 @@ let _ECVRF_prove input public_key private_key generator =
             let snd = _I2OSP c n in 
             let thd = _I2OSP s ( op_Multiply 2 n) in 
     let pi = seqConcat fst (seqConcat snd thd) in Some pi
-(*)
 
 val _ECVRF_rec : counter: nat -> counter_local: nat{counter_local < counter} -> 
                 s: seq 'a {Seq.length s > counter} -> r_temp : seq 'a ->
@@ -130,17 +129,23 @@ let _ECVRF_proof2hash pi =
      _ECVRF_rec (op_Multiply 2 n + 1) 2 pi r_temp
 
 
-assume val _ECVRF_decode_proof: 
+val _ECVRF_decode_proof: 
         pi: bytes {Seq.length pi = op_Multiply 5 n + 1} -> 
-        Tot(tuple3 (option serialized_point) key key)
+        Tot(tuple3 (option serialized_point) bytes bytes) (* due to the fact that
+         we do point multiplication using seq of bytes, 
+        the operation to cast the value to int and to sequence 
+        back is decided to be needless*)
+
+let _ECVRF_decode_proof pi = 
+    let gamma, cs = Seq.split pi ((op_Multiply 2 n)+1) in 
+    let c, s = Seq.split cs n in 
+    (Some(_OS2ECP gamma), c, s)
 
 
 val _ECVRF_verify : generator: serialized_point ->  public_key : serialized_point ->
         pi: bytes {Seq.length pi = op_Multiply 5 n +1} -> 
         input : bytes -> 
         Tot(bool)
-
-assume val bytesToInt: s: bytes -> Tot(int)
 
 let _ECVRF_verify generator public_key pi input = 
     let gamma, c, s = _ECVRF_decode_proof pi in 
@@ -158,4 +163,4 @@ let _ECVRF_verify generator public_key pi input =
     let hs = scalarMultiplication h s in 
     let v = scalarAddition gammac hs in 
     let c_prime = _ECVRF_hash_points generator h public_key gamma u v in 
-    (bytesToInt c) = c_prime
+    (_OS2IP c) = c_prime
