@@ -87,10 +87,12 @@ let _ECP2OS gamma =
     else
         seqConcat negative_point_const x    
 
-assume val hash: a: bytes -> Tot(bytes)        
+val hash: input: bytes{Seq.length input < pow2 61} -> Tot(bytes)    
+let hash input = 
+    Spec.SHA2_256.hash input
 
 val _helper_ECVRF_hash_to_curve : 
-    ctr : nat -> input: bytes -> pk: bytes -> Tot(r: option serialized_point{isPointOnCurve r})(decreases(field - ctr))
+    ctr : nat -> input: bytes{Seq.length input < pow2 61 - (op_Multiply 2 n) - 5 } -> pk: bytes -> Tot(r: option serialized_point{isPointOnCurve r})(decreases(field - ctr))
 
 let rec _helper_ECVRF_hash_to_curve ctr input pk = 
     let _CTR = _I2OSP ctr 4 in 
@@ -108,7 +110,7 @@ let rec _helper_ECVRF_hash_to_curve ctr input pk =
                     else None    
 
 
-val _ECVRF_hash_to_curve: input: bytes -> 
+val _ECVRF_hash_to_curve: input: bytes{Seq.length input < pow2 61 - (op_Multiply 2 n) - 5 } -> 
             public_key: (serialized_point) -> Tot(option serialized_point)            
 
 let _ECVRF_hash_to_curve input public_key = 
@@ -128,17 +130,17 @@ val _ECVRF_hash_points : generator: serialized_point -> h:  serialized_point ->
             Tot(int)
 
 let _ECVRF_hash_points generator h public_key gamma gk hk = 
-    let p = _ECP2OS generator in 
-    let p = seqConcat p (_ECP2OS h) in 
-    let p = seqConcat p (_ECP2OS public_key) in 
-    let p = seqConcat p (_ECP2OS gamma) in 
+    let p = _ECP2OS generator in (*2n +1 = 33 *)
+    let p = seqConcat p (_ECP2OS h) in (* 66  *)
+    let p = seqConcat p (_ECP2OS public_key) (* 99 *) in 
+    let p = seqConcat p (_ECP2OS gamma)  (* still less than 2pow 61 *)in 
     let p = seqConcat p (_ECP2OS gk) in 
     let p = seqConcat p (_ECP2OS hk) in 
     let h' = hash p in 
     let h = fst (FStar.Seq.split h' n) in 
     _OS2IP h
 
-val _ECVRF_prove: input: bytes ->  public_key: serialized_point -> 
+val _ECVRF_prove: input: bytes {Seq.length input < pow2 61 - (op_Multiply 2 n) - 5 } ->  public_key: serialized_point -> 
             private_key : bytes (* private key in this scope is a mupliplier of the generator *)
             -> generator : serialized_point->  
             Tot(proof: option bytes {Some?proof ==> Seq.length (Some?.v proof) = (op_Multiply 5 n) + 1})
