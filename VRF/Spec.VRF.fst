@@ -12,11 +12,16 @@ open FStar.Endianness
 open Spec.Lib
 open Spec.Curve25519.Lemmas
 open Spec.Curve25519
+open Spec.SHA2_256
+
+
 
 let bytes =  seq FStar.UInt8.t
 let key = lbytes 32
 let order = 2
 let field = 100000000000
+
+let n = 32
 
 let positive_point_const = Seq.create 1 2uy
 let negative_point_const = Seq.create 1 3uy
@@ -24,19 +29,65 @@ let negative_point_const = Seq.create 1 3uy
 assume val scalarMultiplication: point:serialized_point -> k: scalar -> Tot serialized_point
 assume val scalarAddition: p: serialized_point -> q: serialized_point -> Tot serialized_point
 assume val isPointOnCurve: p: option serialized_point -> Tot(bool)
+assume val deserializePoint: serialized_point -> Tot (tuple2 int int) (* I am just a wrapper *)
 
-assume val _ECP2OS : gamma: serialized_point -> Tot(bytes)
+(* PRIME NUMBER CASE! *)
+
 assume val _OS2ECP : bytes -> Tot(serialized_point)
-assume val _I2OSP: value1: int -> n: int -> Tot(bytes)
-assume val _OS2IP: bytes -> nat
 
-assume val hash: a: bytes -> Tot(bytes)
+val nat_to_uint8: x: int {x < 256} -> Tot(FStar.UInt8.t)
+let nat_to_uint8 x = FStar.UInt8.uint_to_t x
+
+val uint8_to_int : x: FStar.UInt8.t -> Tot(int)
+let uint8_to_int x = FStar.UInt8.v x
+
+val _helper_I2OSP: value: int -> n: nat -> counter : nat {counter <= n} -> s: bytes -> Tot (r: bytes {Seq.length r = Seq.length s})
+let rec _helper_I2OSP value n counter s = 
+    let mask = 256 in 
+    let r = value %256 in 
+    let r = nat_to_uint8 r in 
+    let s = upd s counter r in 
+    let number = value / mask  in 
+        if (counter +1 <=n) then 
+            _helper_I2OSP value n (counter +1) s
+        else s
+
+val _I2OSP: value1: int -> n: int{n > 0} -> Tot(r: bytes{Seq.length r = n})
+let _I2OSP value1 n = 
+    if (pow2 n <= value1) then Seq.create n 0uy
+    else 
+        let s = Seq.create n 0uy in 
+         (_helper_I2OSP value1 n 0 s)
+
+val _helper_OS2IP: s: bytes  -> counter: nat {counter < Seq.length s} -> number: int -> Tot (int)
+let rec _helper_OS2IP s counter number = 
+    let temp = Seq.index s counter in 
+    let temp = uint8_to_int temp in 
+    let number = number + (op_Multiply (pow2 8*counter) temp) in 
+    if (counter + 1 = Seq.length s) then number else _helper_OS2IP s (counter+1) number
+
+val _OS2IP: s: bytes{Seq.length s > 0} -> nat
+
+let _OS2IP s = 
+    _helper_OS2IP s 0 0
 
 val seqConcat : s1: seq 'a -> s2: seq 'a -> 
             Tot(r:seq 'a{Seq.length    r = Seq.length s1 + Seq.length s2})
 
 let seqConcat s1 s2 = 
-    FStar.Seq.append s1 s2             
+    FStar.Seq.append s1 s2     
+
+val _ECP2OS : gamma: serialized_point -> Tot(r: bytes {Seq.length r = (op_Multiply 2 n) + 1})
+let _ECP2OS gamma = 
+    let x,y = deserializePoint gamma in 
+    let y' = y / 2 in 
+    let x = _I2OSP x (op_Multiply 2 n) in 
+    if y' = 0 then 
+        seqConcat positive_point_const x
+    else
+        seqConcat negative_point_const x    
+
+assume val hash: a: bytes -> Tot(bytes)        
 
 val _helper_ECVRF_hash_to_curve : 
     ctr : nat -> input: bytes -> pk: bytes -> Tot(r: option serialized_point{isPointOnCurve r})(decreases(field - ctr))
@@ -89,8 +140,9 @@ let _ECVRF_hash_points generator h public_key gamma gk hk =
 
 val _ECVRF_prove: input: bytes ->  public_key: serialized_point -> 
             private_key : bytes (* private key in this scope is a mupliplier of the generator *)
-            -> generator : serialized_point-> Tot(option bytes) 
-            (*) Tot(proof: bytes{Seq.len proof = 5 * n + 1}) *)
+            -> generator : serialized_point->  
+            Tot(proof: option bytes {Some?proof ==> Seq.length (Some?.v proof) = (op_Multiply 5 n) + 1})
+            (*Tot(proof: option bytes{Seq.length proof = 5 * n + 1})  *)
 
 let _ECVRF_prove input public_key private_key generator = 
     let h = _ECVRF_hash_to_curve input public_key in 
@@ -108,8 +160,8 @@ let _ECVRF_prove input public_key private_key generator =
             let k_ = _OS2IP k in (* random was generated in the seq -> cast to nat *)
     let s = k_ - cqmodq (* int *) in 
             let fst = _ECP2OS gamma in 
-            let snd = _I2OSP c n in 
-            let thd = _I2OSP s ( op_Multiply 2 n) in 
+            let snd = _I2OSP c n in (* Seq length snd = n*)
+            let thd = _I2OSP s ( op_Multiply 2 n) (* Seq.length thr = 2n *) in 
     let pi = seqConcat fst (seqConcat snd thd) in Some pi
 
 val _ECVRF_rec : counter: nat -> counter_local: nat{counter_local < counter} -> 
