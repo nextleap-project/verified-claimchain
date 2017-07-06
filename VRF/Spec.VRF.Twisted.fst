@@ -30,21 +30,36 @@ let negative_point_const = Seq.create 1 3uy
 
 type twisted_edward_point = ext_point
 
-assume val scalarMultiplication : point : twisted_edward_point -> k: bytes -> Tot twisted_edward_point
-assume val scalarAddition : point : twisted_edward_point -> q: twisted_edward_point -> Tot twisted_edward_point
-assume val isPointOnCurve: point : option twisted_edward_point -> Tot bool
-assume val serializePoint : point: twisted_edward_point -> Tot bytes
-assume val deserializePoint : bytes -> Tot twisted_edward_point
+val scalarMultiplication : point : twisted_edward_point -> k: bytes -> Tot twisted_edward_point
+let scalarMultiplication point k = 
+    Spec.Ed25519.point_mul k point
 
-(*
-assume val scalarMultiplication: point:serialized_point -> k: scalar -> Tot serialized_point
-assume val scalarAddition: p: serialized_point -> q: serialized_point -> Tot serialized_point
-assume val isPointOnCurve: p: option serialized_point -> Tot(bool)
-assume val deserializePoint: serialized_point -> Tot (tuple2 nat nat) (* I am just a wrapper *)
-*)
-(* PRIME NUMBER CASE! *)
+val scalarAddition : p : twisted_edward_point -> q: twisted_edward_point -> Tot twisted_edward_point
+let scalarAddition p q = 
+    Spec.Ed25519.point_add p q 
 
-val _OS2ECP : point: bytes -> Tot(twisted_edward_point)
+val isPointOnCurve: point : option twisted_edward_point -> Tot bool
+let isPointOnCurve point =
+    if isNone point then false else
+    let point = get point in 
+    let px, py, pz, pt = point in 
+    let zinv = modp_inv pz in 
+    let x = fmul px zinv in 
+    let y = fmul py zinv in 
+    let x2 = fmul x x in 
+    let x3 = fmul x2 x in 
+    let y2 = fmul y y in 
+    let ax2 = fmul 486662 x2 in 
+    let r = y2 - x3 - ax2 - x in 
+    (r%prime) = 0
+
+val serializePoint : point: twisted_edward_point -> Tot bytes
+let serializePoint point = point_compress point
+
+val deserializePoint : b: bytes{Seq.length b = 32} -> Tot (option twisted_edward_point)
+let deserializePoint b = point_decompress b
+
+val _OS2ECP : point: bytes -> Tot(option twisted_edward_point)
 let _OS2ECP point = deserializePoint point
 
 val _ECP2OS : gamma: twisted_edward_point -> Tot(r: bytes {Seq.length r = 32})
@@ -111,11 +126,13 @@ let rec _helper_ECVRF_hash_to_curve ctr input pk =
     let hash = hash toHash in 
     let possible_point = seqConcat positive_point_const hash in 
     let possible_point = _OS2ECP possible_point in 
-        if isPointOnCurve (Some possible_point) then Some possible_point 
+    if isNone possible_point then None else
+        if isPointOnCurve possible_point then possible_point 
         else
             let possible_point    = seqConcat negative_point_const hash in 
             let possible_point = _OS2ECP possible_point in 
-                if isPointOnCurve (Some possible_point) then Some possible_point 
+            if isNone possible_point then None else
+                if isPointOnCurve possible_point then possible_point 
                 else 
                     if (ctr +1) < field 
                         then _helper_ECVRF_hash_to_curve (ctr+1) input pk 
@@ -204,7 +221,7 @@ val _ECVRF_decode_proof:
 let _ECVRF_decode_proof pi = 
     let gamma, cs = Seq.split pi ((op_Multiply 2 n)+1) in 
     let c, s = Seq.split cs n in 
-    (Some(_OS2ECP gamma), c, s)
+    ((_OS2ECP gamma), c, s)
 
 
 val _ECVRF_verify : generator: twisted_edward_point ->  public_key : twisted_edward_point ->
