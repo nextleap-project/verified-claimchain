@@ -17,7 +17,6 @@ open Spec.Ed25519
 open Spec.SHA2_256
 *)
 
-
 let bytes =  seq FStar.UInt8.t
 let key = lbytes 32
 let order = 2
@@ -59,7 +58,8 @@ let serializePoint point = point_compress point
 val deserializePoint : b: bytes{Seq.length b = 32} -> Tot (option twisted_edward_point)
 let deserializePoint b = point_decompress b
 
-val _OS2ECP : point: bytes -> Tot(option twisted_edward_point)
+
+val _OS2ECP : point: bytes{Seq.length point = 32} -> Tot(option twisted_edward_point)
 let _OS2ECP point = deserializePoint point
 
 val _ECP2OS : gamma: twisted_edward_point -> Tot(r: bytes {Seq.length r = 32})
@@ -111,56 +111,60 @@ val seqConcat : s1: seq 'a -> s2: seq 'a ->
 let seqConcat s1 s2 = 
     FStar.Seq.append s1 s2     
 
-val hash: input: bytes{Seq.length input < pow2 61} -> Tot(bytes)    
+val hash: input: bytes{Seq.length input < Spec.SHA2_256.max_input_len_8} -> 
+        Tot(r: bytes{Seq.length r = Spec.SHA2_256.size_hash})    
 let hash input = 
     Spec.SHA2_256.hash input
 
+#reset-options "--max_fuel 0 --z3rlimit 1"
+
 val _helper_ECVRF_hash_to_curve : 
-    ctr : nat -> input: bytes{Seq.length input < pow2 61 - (op_Multiply 2 n) - 5 } -> pk: bytes ->
-        Tot(r: option twisted_edward_point{isPointOnCurve r})(decreases(field - ctr)) 
+    ctr : nat{ctr < field} ->counter_length:nat{counter_length > 0} ->  
+    pk: bytes{Seq.length pk = 32} ->
+    input: bytes{Seq.length input < Spec.SHA2_256.max_input_len_8 - 32 - counter_length } ->
+    Tot(r: option twisted_edward_point {Some?r ==> isPointOnCurve r}) 
+    (decreases(field - ctr)) 
 
-let rec _helper_ECVRF_hash_to_curve ctr input pk = 
-    let _CTR = _I2OSP ctr 4 in 
+let rec _helper_ECVRF_hash_to_curve ctr counter_length pk input = 
+    let _CTR = _I2OSP ctr counter_length in 
     let toHash = seqConcat input pk in 
-    let toHash = seqConcat toHash _CTR in 
-    let hash = hash toHash in 
-    let possible_point = seqConcat positive_point_const hash in 
-    let possible_point = _OS2ECP possible_point in 
+    let toHash = seqConcat toHash _CTR in (* point nonce *)
+    let hash = hash toHash in
+    (*let possible_point = seqConcat positive_point_const hash in*) (* this one was deleted becauce of decompression func *) 
+    (*let possible_point = _OS2ECP possible_point in *)
+    let possible_point = _OS2ECP hash in 
     if isNone possible_point then None else
-        if isPointOnCurve possible_point then possible_point 
+        if isPointOnCurve possible_point then possible_point
         else
-            let possible_point    = seqConcat negative_point_const hash in 
-            let possible_point = _OS2ECP possible_point in 
-            if isNone possible_point then None else
-                if isPointOnCurve possible_point then possible_point 
-                else 
-                    if (ctr +1) < field 
-                        then _helper_ECVRF_hash_to_curve (ctr+1) input pk 
-                    else None    
+            if (ctr +1) < field
+                then (
+                    assert((ctr+1) <field);
+                    _helper_ECVRF_hash_to_curve (ctr+1) counter_length pk input)
+            else None    
 
-val _ECVRF_hash_to_curve: input: bytes{Seq.length input < pow2 61 - (op_Multiply 2 n) - 5 } -> 
+val _ECVRF_hash_to_curve: input: bytes{Seq.length input < Spec.SHA2_256.max_input_len_8 - 36 } -> 
             public_key: (twisted_edward_point) -> Tot(option twisted_edward_point)            
 
 let _ECVRF_hash_to_curve input public_key = 
     let ctr = 0 in 
     let pk = _ECP2OS public_key in 
-    let point = _helper_ECVRF_hash_to_curve ctr input pk in point
+    let point = _helper_ECVRF_hash_to_curve ctr 4 pk input in point
 
-assume val random:     max: nat -> Tot(random : nat {random <= max})    
+assume val random:     max: nat -> Tot(random : nat {random > 0 /\ random < max})    
 
-val randBytes: max: nat -> Tot(bytes) 
+val randBytes: max: nat -> Tot(r:bytes{Seq.length r = 32})
 let randBytes max = 
     let rand = random max in _I2OSP rand 32 (* in octets = log_2 field / 8  *)
 
 val _ECVRF_hash_points : generator: twisted_edward_point -> h:  twisted_edward_point -> 
             public_key: twisted_edward_point -> gamma : twisted_edward_point -> 
             gk : twisted_edward_point -> hk : twisted_edward_point -> 
-            Tot(int)
+            Tot(nat)
 
 let _ECVRF_hash_points generator h public_key gamma gk hk = 
-    let p = _ECP2OS generator in (*2n +1 = 33 *)
-    let p = seqConcat p (_ECP2OS h) in (* 66  *)
-    let p = seqConcat p (_ECP2OS public_key) (* 99 *) in 
+    let p = _ECP2OS generator in (*32 *)
+    let p = seqConcat p (_ECP2OS h) in (* 64  *)
+    let p = seqConcat p (_ECP2OS public_key) (* 32*3 *) in 
     let p = seqConcat p (_ECP2OS gamma)  (* still less than 2pow 61 *)in 
     let p = seqConcat p (_ECP2OS gk) in 
     let p = seqConcat p (_ECP2OS hk) in 
@@ -168,32 +172,37 @@ let _ECVRF_hash_points generator h public_key gamma gk hk =
     let h = fst (FStar.Seq.split h' n) in 
     _OS2IP h
 
-val _ECVRF_prove: input: bytes {Seq.length input < pow2 61 - (op_Multiply 2 n) - 5 } ->  public_key: twisted_edward_point -> 
+val _ECVRF_prove: input: bytes {Seq.length input < Spec.SHA2_256.max_input_len_8 - 36 } ->  public_key: twisted_edward_point -> 
             private_key : bytes (* private key in this scope is a mupliplier of the generator *)
             -> generator : twisted_edward_point->  
-            Tot(proof: option bytes {Some?proof ==> Seq.length (Some?.v proof) = (op_Multiply 5 n) + 1})
+            Tot(proof: option bytes {Some?proof ==> Seq.length (Some?.v proof) = op_Multiply 4 n})
             (*Tot(proof: option bytes{Seq.length proof = 5 * n + 1})  *)
 
 let _ECVRF_prove input public_key private_key generator = 
     let h = _ECVRF_hash_to_curve input public_key in 
-        if isNone h then None (* trying to convert the hash to point, 
-        if it was not possible returns None *)
+        if isNone h then None (* trying to convert the hash to point, if it was not possible returns None *)
         else 
             let h = get h in 
     let gamma = scalarMultiplication h private_key in 
-    let k =  randBytes field in  (* random in sequence  *)
+    let k_ = random field in 
+    let k =  _I2OSP k_ 32 in  (* random in sequence  *)
         let gk = scalarMultiplication generator k in  (* k< (2^8)^32 = 2^(8*32) = 2^(2^3 * 2^ 5 = 256) *) (* *)
         let hk = scalarMultiplication h k in 
     let c = _ECVRF_hash_points generator h public_key gamma gk hk in (*int*)
             let cq = op_Multiply c field in  (*int*)
             let cqmodq = cq % field in 
-            let k_ = _OS2IP k in (* random was generated in the seq -> cast to nat *)
-    let s = k_ - cqmodq (* int *) in 
-            let fst = _ECP2OS gamma in 
+            assert(cqmodq < field);
+            assert(k_ <field); 
+            assert(k_ + field > field); (* I assume that the operations are done in the field. *)
+    let k_ = k_ + field in         
+            (* random was generated in the seq -> cast to nat *)
+    let s = k_ - cqmodq (* int *) in (*cqmodq is < field *)
+    assert (s > 0);
+            let fst = _ECP2OS gamma in (*32*)
             let snd = _I2OSP c n in (* Seq length snd = n*)
             let thd = _I2OSP s ( op_Multiply 2 n) (* Seq.length thr = 2n *) in 
     let pi = seqConcat fst (seqConcat snd thd) in Some pi
-
+(*)
 val _ECVRF_rec : counter: nat -> counter_local: nat{counter_local < counter} -> 
                 s: seq 'a {Seq.length s > counter} -> r_temp : seq 'a ->
                 Tot(r: seq 'a)(decreases (counter - counter_local))
@@ -204,7 +213,7 @@ let rec _ECVRF_rec counter counter_local s r_temp =
         then _ECVRF_rec counter (counter_local +1) s r_temp
     else 
         r_temp
-
+(*)
 val _ECVRF_proof2hash: pi: bytes{Seq.length pi = op_Multiply 5 n + 1} -> Tot(hash: bytes)
 let _ECVRF_proof2hash pi = 
     let r_temp = Seq.createEmpty in 
