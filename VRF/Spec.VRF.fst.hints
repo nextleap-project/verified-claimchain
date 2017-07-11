@@ -1,0 +1,655 @@
+[
+  "viBã“å<ÊT\u0000D\u0004ƒ¹xD",
+  [
+    [
+      "Spec.VRF.key",
+      1,
+      2,
+      1,
+      [ "@query", "projection_inverse_BoxInt_proj_0" ],
+      0
+    ],
+    [
+      "Spec.VRF.positive_point_const",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Spec.Curve25519.elem",
+        "equation_Spec.Curve25519.one", "equation_Spec.Curve25519.prime",
+        "function_token_typing_Spec.Curve25519.one",
+        "refinement_interpretation_Spec.Curve25519_Tm_refine_64fde586cd61a9af199b0a72fdba45d1"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF.negative_point_const",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Spec.Curve25519.elem",
+        "equation_Spec.Curve25519.one", "equation_Spec.Curve25519.prime",
+        "function_token_typing_Spec.Curve25519.one",
+        "refinement_interpretation_Spec.Curve25519_Tm_refine_64fde586cd61a9af199b0a72fdba45d1"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF.isPointOnCurve",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Spec.Curve25519.elem",
+        "equation_Spec.Curve25519.prime", "equation_Spec.Ed25519.g_y",
+        "function_token_typing_Spec.Ed25519.g_y",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Spec.Curve25519_Tm_refine_64fde586cd61a9af199b0a72fdba45d1"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF.isPointOnCurve",
+      2,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF.deserializePoint",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF.deserializePoint",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_FStar.UInt8.t",
+        "equation_Spec.VRF.bytes",
+        "refinement_interpretation_Spec.VRF_Tm_refine_8274173e0780491dcfd7be1a7e81e7bb"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._OS2ECP",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [ "Spec.VRF._OS2ECP", 2, 2, 1, [ "@query" ], 0 ],
+    [
+      "Spec.VRF._ECP2OS",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECP2OS",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_FStar.UInt8.t",
+        "equation_Spec.Lib.lbytes", "equation_Spec.VRF.serializePoint",
+        "equation_Spec.VRF.twisted_edward_point",
+        "refinement_interpretation_FStar.BitVector_Tm_refine_a0cd7d06c5da6444b6b51b319febde8e",
+        "typing_Spec.Ed25519.point_compress"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF.nat_to_uint8",
+      1,
+      2,
+      1,
+      [ "@query", "projection_inverse_BoxInt_proj_0" ],
+      0
+    ],
+    [
+      "Spec.VRF._helper_I2OSP",
+      1,
+      2,
+      1,
+      [
+        "@query", "assumption_Prims.HasEq_int", "equation_Prims.nat",
+        "haseqPrims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._helper_I2OSP",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "binder_x_3916321a11fbfa3d828e766100bb3a7d_2",
+        "binder_x_e22ba7a032a73f6d0678d3d186686631_0",
+        "binder_x_e6232918852506145dafcbbc17c74020_1",
+        "equality_tok_Prims.LexTop@tok", "equation_FStar.UInt8.t",
+        "equation_Prims.nat", "equation_Spec.VRF.bytes",
+        "equation_Spec.VRF.nat_to_uint8", "int_inversion", "int_typing",
+        "kinding_FStar.UInt8.t_@tok", "lemma_FStar.Seq.Base.lemma_len_upd",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThan",
+        "primitive_Prims.op_Modulus", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_FStar.Seq.Base_Tm_refine_2ca062977a42c36634b89c1c4f193f79",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.VRF_Tm_refine_e55c16a580d735ff9c0b34ba1347488b",
+        "refinement_interpretation_Spec.VRF_Tm_refine_f04ba423b632ee4dc6ae8a29d64452c2",
+        "well-founded-ordering-on-nat"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._I2OSP",
+      1,
+      2,
+      1,
+      [
+        "@query", "assumption_Prims.HasEq_int",
+        "haseqSpec.VRF_Tm_refine_bef40ecb27fe134e9028551108703423"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._I2OSP",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_correspondence_Spec.VRF._helper_I2OSP.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "b2t_def", "equation_FStar.UInt.fits", "equation_FStar.UInt.max_int",
+        "equation_FStar.UInt.min_int", "equation_FStar.UInt.size",
+        "equation_FStar.UInt.uint_t", "equation_FStar.UInt64.t",
+        "equation_FStar.UInt8.n", "equation_FStar.UInt8.t",
+        "equation_Prims.nat", "equation_Prims.pos",
+        "function_token_typing_Spec.SHA512.h_0", "int_inversion",
+        "int_typing", "kinding_FStar.UInt64.t_@tok",
+        "kinding_FStar.UInt8.t_@tok",
+        "lemma_FStar.Seq.Base.lemma_create_len", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_FStar.UInt8_Tm_refine_22871ed0ff70fd094ad3e8d742624d47",
+        "refinement_interpretation_FStar.UInt_Tm_refine_a347709bfeba48709474ad26f4f6be87",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Prims_Tm_refine_f048236b5f8051f83b495ea5eaa6127b",
+        "refinement_interpretation_Spec.SHA512_Tm_refine_a38ba213f7d10ad82997d9720a14fea1",
+        "typing_FStar.Seq.Base.length", "typing_FStar.UInt8.uint_to_t",
+        "typing_Prims.pow2"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._helper_OS2IP",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565", "b2t_def",
+        "binder_x_2e76b27c8f3fa34f45a9e4f24211b993_1",
+        "binder_x_e22ba7a032a73f6d0678d3d186686631_2",
+        "binder_x_e6232918852506145dafcbbc17c74020_0",
+        "data_elim_FStar.UInt8.Mk", "equality_tok_Prims.LexTop@tok",
+        "equation_FStar.Mul.op_Star", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.min_int", "equation_FStar.UInt.size",
+        "equation_FStar.UInt.uint_t", "equation_FStar.UInt64.t",
+        "equation_FStar.UInt8.n", "equation_FStar.UInt8.t",
+        "equation_FStar.UInt8.v", "equation_Prims.nat",
+        "equation_Spec.VRF.bytes", "equation_Spec.VRF.uint8_to_int",
+        "fuel_guarded_inversion_FStar.UInt8.t_",
+        "function_token_typing_Spec.SHA512.h_0", "int_inversion",
+        "int_typing", "kinding_FStar.UInt64.t_@tok",
+        "kinding_FStar.UInt8.t_@tok", "lemma_FStar.UInt.pow2_values",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "proj_equation_FStar.UInt8.Mk_v",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_FStar.UInt_Tm_refine_a347709bfeba48709474ad26f4f6be87",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.SHA512_Tm_refine_a38ba213f7d10ad82997d9720a14fea1",
+        "refinement_interpretation_Spec.VRF_Tm_refine_7e13b944b3ab1aafa17ddb652daeb8ae",
+        "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._helper_OS2IP",
+      2,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._OS2IP",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_FStar.UInt8.t",
+        "equation_Spec.VRF.bytes",
+        "refinement_interpretation_Spec.VRF_Tm_refine_28e12d2d077c6fef323c79aa602a6901"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF.seqConcat",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF.seqConcat",
+      2,
+      2,
+      1,
+      [ "@query", "lemma_FStar.Seq.Base.lemma_len_append" ],
+      0
+    ],
+    [
+      "Spec.VRF.hash",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF.hash",
+      2,
+      2,
+      1,
+      [ "@query", "equation_Spec.SHA2_256.max_input_len_8" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      2,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      3,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      4,
+      0,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565", "b2t_def",
+        "data_elim_FStar.UInt32.Mk", "equation_FStar.Mul.op_Star",
+        "equation_FStar.Seq.Properties.split", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
+        "equation_FStar.UInt32.n", "equation_FStar.UInt32.t",
+        "equation_FStar.UInt32.uint_to_t", "equation_FStar.UInt8.t",
+        "equation_Prims.nat", "equation_Spec.SHA2_256.size_hash",
+        "equation_Spec.SHA2_256.size_hash_w",
+        "equation_Spec.SHA2_256.size_len_ul_8", "equation_Spec.VRF.bytes",
+        "equation_Spec.VRF.n",
+        "function_token_typing_Spec.SHA2_256.size_hash",
+        "function_token_typing_Spec.SHA2_256.size_len_ul_8", "int_inversion",
+        "int_typing", "kinding_FStar.UInt8.t_@tok",
+        "lemma_FStar.Seq.Base.lemma_len_slice", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_LessThanOrEqual", "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Mktuple2__1",
+        "projection_inverse_FStar.Pervasives.Mktuple2__2",
+        "refinement_interpretation_FStar.Seq.Base_Tm_refine_aebc5aa9049e78f605051015a3436e68",
+        "refinement_interpretation_FStar.UInt_Tm_refine_a347709bfeba48709474ad26f4f6be87",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.VRF_Tm_refine_257f7d3c5a22c2a18bbcedaab72302a7",
+        "typing_FStar.Seq.Base.length"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      5,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      6,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      7,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      8,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      9,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_decode_proof",
+      10,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._helper_ECVRF_hash_to_curve",
+      1,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._helper_ECVRF_hash_to_curve",
+      2,
+      0,
+      2,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565", "b2t_def",
+        "binder_x_7185750b70fd56baf6188a557cfdb1a2_2",
+        "binder_x_a67779bf2c73b09aceacfcee22c5dde5_1",
+        "binder_x_ce93d649cfb35b88fbaf6015dbda4f67_0",
+        "binder_x_e501005e74157bcabc03a61c1b473510_3", "bool_inversion",
+        "constructor_distinct_FStar.Pervasives.None",
+        "data_elim_FStar.UInt32.Mk", "disc_equation_FStar.Pervasives.Some",
+        "equality_tok_Prims.LexTop@tok", "equation_FStar.Endianness.bytes",
+        "equation_FStar.Mul.op_Star", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
+        "equation_FStar.UInt32.n", "equation_FStar.UInt32.t",
+        "equation_FStar.UInt32.uint_to_t", "equation_FStar.UInt8.n",
+        "equation_FStar.UInt8.t", "equation_Prims.nat",
+        "equation_Spec.Ed25519.ext_point",
+        "equation_Spec.SHA2_256.max_input_len_8",
+        "equation_Spec.SHA2_256.size_hash",
+        "equation_Spec.SHA2_256.size_hash_w",
+        "equation_Spec.SHA2_256.size_len_ul_8", "equation_Spec.VRF._OS2ECP",
+        "equation_Spec.VRF.bytes", "equation_Spec.VRF.field",
+        "equation_Spec.VRF.hash", "equation_Spec.VRF.seqConcat",
+        "equation_Spec.VRF.twisted_edward_point",
+        "function_token_typing_FStar.UInt8.n",
+        "function_token_typing_Spec.SHA2_256.size_hash",
+        "function_token_typing_Spec.SHA2_256.size_len_ul_8", "int_inversion",
+        "int_typing", "kinding_FStar.UInt8.t_@tok",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThan",
+        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_FStar.Endianness_Tm_refine_b769c0bf16cb286238e7b11ff583e99b",
+        "refinement_interpretation_FStar.Seq.Base_Tm_refine_5514fbe9e08dfda40f950a7b9f1b2b98",
+        "refinement_interpretation_FStar.UInt_Tm_refine_a347709bfeba48709474ad26f4f6be87",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Prims_Tm_refine_f048236b5f8051f83b495ea5eaa6127b",
+        "refinement_interpretation_Spec.VRF_Tm_refine_5437e25f10e9baef998139f6ddb207a9",
+        "refinement_interpretation_Spec.VRF_Tm_refine_8274173e0780491dcfd7be1a7e81e7bb",
+        "refinement_interpretation_Spec.VRF_Tm_refine_8cd00e20e6d2be16f2370aca90594432",
+        "typing_FStar.Seq.Base.length", "typing_FStar.UInt.fits",
+        "well-founded-ordering-on-nat"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_hash_to_curve",
+      1,
+      0,
+      1,
+      [
+        "@query", "equation_Spec.SHA2_256.max_input_len_8",
+        "equation_Spec.VRF.field", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF.randBytes",
+      1,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF.randBytes",
+      2,
+      0,
+      1,
+      [ "@query", "projection_inverse_BoxInt_proj_0" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_hash_points",
+      1,
+      0,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "equation_FStar.Mul.op_Star", "equation_FStar.Pervasives.fst",
+        "equation_FStar.Seq.Properties.split", "equation_FStar.UInt8.t",
+        "equation_Prims.nat", "equation_Spec.Curve25519.elem",
+        "equation_Spec.Ed25519.ext_point",
+        "equation_Spec.SHA2_256.max_input_len_8",
+        "equation_Spec.SHA2_256.size_hash",
+        "equation_Spec.SHA2_256.size_hash_w", "equation_Spec.VRF._ECP2OS",
+        "equation_Spec.VRF.bytes", "equation_Spec.VRF.hash",
+        "equation_Spec.VRF.n", "equation_Spec.VRF.seqConcat",
+        "equation_Spec.VRF.twisted_edward_point",
+        "fuel_guarded_inversion_FStar.Pervasives.tuple4",
+        "function_token_typing_Spec.SHA2_256.size_hash", "int_inversion",
+        "int_typing", "kinding_FStar.UInt8.t_@tok",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "lemma_FStar.Seq.Properties.slice_length",
+        "lemma_Spec.SHA2_256.pow2_values", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Multiply",
+        "proj_equation_FStar.Pervasives.Mktuple2__1",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Mktuple2__1",
+        "refinement_interpretation_FStar.Endianness_Tm_refine_b769c0bf16cb286238e7b11ff583e99b",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.VRF_Tm_refine_0c12a1cf1552de0ad3165ee92d062049",
+        "refinement_interpretation_Spec.VRF_Tm_refine_8274173e0780491dcfd7be1a7e81e7bb",
+        "typing_FStar.Seq.Base.append", "typing_Spec.VRF._ECP2OS",
+        "typing_Spec.VRF.seqConcat", "typing_Spec.VRF.serializePoint"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_prove",
+      1,
+      0,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [ "Spec.VRF._ECVRF_prove", 2, 0, 1, [ "@query" ], 0 ],
+    [
+      "Spec.VRF._ECVRF_prove",
+      3,
+      0,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "constructor_distinct_FStar.Pervasives.None",
+        "disc_equation_FStar.Pervasives.Some", "equation_FStar.Mul.op_Star",
+        "equation_FStar.UInt8.t", "equation_Prims.nat",
+        "equation_Spec.Curve25519.elem", "equation_Spec.Ed25519.ext_point",
+        "equation_Spec.SHA2_256.size_hash",
+        "equation_Spec.SHA2_256.size_hash_w", "equation_Spec.VRF._ECP2OS",
+        "equation_Spec.VRF._ECVRF_hash_to_curve", "equation_Spec.VRF._I2OSP",
+        "equation_Spec.VRF.bytes", "equation_Spec.VRF.field",
+        "equation_Spec.VRF.n", "equation_Spec.VRF.scalarMultiplication",
+        "equation_Spec.VRF.seqConcat",
+        "equation_Spec.VRF.twisted_edward_point",
+        "fuel_guarded_inversion_FStar.Pervasives.tuple4",
+        "function_token_typing_Spec.Ed25519.ext_point",
+        "function_token_typing_Spec.SHA2_256.size_hash", "int_inversion",
+        "kinding_FStar.UInt8.t_@tok",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Modulus",
+        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "proj_equation_FStar.Pervasives.Some_v",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Some_v",
+        "refinement_interpretation_FStar.Endianness_Tm_refine_b769c0bf16cb286238e7b11ff583e99b",
+        "refinement_interpretation_Spec.VRF_Tm_refine_0c12a1cf1552de0ad3165ee92d062049",
+        "refinement_interpretation_Spec.VRF_Tm_refine_8274173e0780491dcfd7be1a7e81e7bb",
+        "refinement_interpretation_Spec.VRF_Tm_refine_bfe7a44898f64f243c29ec773ed8084f",
+        "refinement_interpretation_Spec.VRF_Tm_refine_fc0cfb1defaf9a15049f2f7e1f2084fd",
+        "typing_FStar.Option.get", "typing_FStar.Seq.Base.append",
+        "typing_Spec.VRF._ECP2OS", "typing_Spec.VRF.scalarMultiplication",
+        "typing_Spec.VRF.seqConcat", "typing_Spec.VRF.serializePoint"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_proof2hash",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_proof2hash",
+      2,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_proof2hash",
+      3,
+      1,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565", "b2t_def",
+        "data_elim_FStar.UInt32.Mk", "equation_FStar.Mul.op_Star",
+        "equation_FStar.Pervasives.fst",
+        "equation_FStar.Seq.Properties.split", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
+        "equation_FStar.UInt32.n", "equation_FStar.UInt32.t",
+        "equation_FStar.UInt32.uint_to_t", "equation_FStar.UInt8.t",
+        "equation_Prims.nat", "equation_Spec.SHA2_256.size_hash",
+        "equation_Spec.SHA2_256.size_hash_w",
+        "equation_Spec.SHA2_256.size_len_ul_8", "equation_Spec.VRF.bytes",
+        "equation_Spec.VRF.n",
+        "function_token_typing_Spec.SHA2_256.size_hash",
+        "function_token_typing_Spec.SHA2_256.size_len_ul_8", "int_inversion",
+        "int_typing", "kinding_FStar.UInt8.t_@tok",
+        "lemma_FStar.Seq.Base.lemma_len_slice", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_LessThanOrEqual", "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_Subtraction",
+        "proj_equation_FStar.Pervasives.Mktuple2__1",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Mktuple2__1",
+        "refinement_interpretation_FStar.Seq.Base_Tm_refine_aebc5aa9049e78f605051015a3436e68",
+        "refinement_interpretation_FStar.UInt_Tm_refine_a347709bfeba48709474ad26f4f6be87",
+        "refinement_interpretation_Prims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d",
+        "refinement_interpretation_Spec.VRF_Tm_refine_257f7d3c5a22c2a18bbcedaab72302a7"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_verify",
+      1,
+      2,
+      1,
+      [ "@query", "assumption_Prims.HasEq_int" ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_verify",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_FStar.UInt8.t",
+        "equation_Spec.VRF.bytes", "equation_Spec.VRF.n",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_FStar.Endianness_Tm_refine_b769c0bf16cb286238e7b11ff583e99b"
+      ],
+      0
+    ],
+    [
+      "Spec.VRF._ECVRF_verify",
+      3,
+      2,
+      1,
+      [
+        "@query", "assumption_Prims.HasEq_int", "equation_Prims.nat",
+        "haseqPrims_Tm_refine_ba523126f67e00e7cd55f0b92f16681d"
+      ],
+      0
+    ]
+  ]
+]
