@@ -5,39 +5,27 @@ open Spec.Claim
 
 let bytes =  seq FStar.UInt8.t
 
-type indentifier = 
-|InitIndent : source: string -> identifier : option string -> indentifier
-
-type keyEnt = 
-|InitKeyEnt : source: string -> key: bytes -> keyEnt
-
-
-type metadata = 
-|InitMetadata: screen_name: option string ->
-				real_name: option string -> 
-				identifiers: list indentifier -> 
-				keys: list keyEnt -> 
-				metadata
-
-
 type claimChain = 
-|InitChaimChain : meta : metadata -> 
+|InitChaimChain : 
+			id: bytes -> 
+			meta : metadata -> 
 			claims: list claim -> 
+			state: bytes -> 
 			claimChain
 
 
 private val getMetadata: c: claimChain -> metadata
 let getMetadata c = 
 	match c with 
-	| InitChaimChain meta _ -> meta
+	| InitChaimChain _ meta _ _ -> meta
 
 private val getClaims : c: claimChain -> list claim
 let getClaims c = 
 	match c with 
-	| InitChaimChain _ claims -> claims	
+	| InitChaimChain _ _ claims _ -> claims	
 
 val addElement: c: claimChain -> e: 'a -> Tot ( r: claimChain{getClaims c = getClaims r})
 let addElement c e = 
 	let metadata = getMetadata c in 
 	let blocks = getClaims c in 
-	InitChaimChain metadata blocks
+	InitChaimChain c.id metadata blocks c.state
