@@ -49,7 +49,7 @@ type claim =
 		id: bytes -> 
 		signature : bytes{verify signature id}-> claim
 
-val getClaimLabel: cl: claim -> time
+val getClaimLabel: cl: claim -> bytes
 let getClaimLabel cl = 
 	match cl with
 	| InitClaim  label _ _ -> timeStamp
@@ -57,6 +57,7 @@ let getClaimLabel cl =
 	| ClaimChainState  label _ _ _  -> timeStamp
 	| Revocation label _ _ -> timeStamp
 
+assume val getClaimBody: cl: claim -> bytes
 
 val getClaimTimeStamp: cl: claim -> time
 let getClaimTimeStamp cl = 
