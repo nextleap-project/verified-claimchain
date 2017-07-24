@@ -1,4 +1,4 @@
-module Spec.ClaimChain
+module Spec.Claim.ClaimChain
 
 open FStar.Seq
 open Spec.Claim
@@ -122,3 +122,5 @@ let generateBlock bl k cls =
     InitClaimChain id nonce t meta claimsCiphers state hashPrevious signature
 
     
+
+
