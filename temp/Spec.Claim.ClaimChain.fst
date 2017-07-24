@@ -29,8 +29,7 @@ assume val random: unit -> Tot bytes
 
 type claimChainBlock  = 
 	|InitClaimChain : 
-			id: bytes -> (* reference to ClaimChain to have claims that states ClaimChainState and revocation
-			equally it could be used as a ref to chaimChain = skipList + index *) 
+			id: nat -> (* reference to ClaimChain to have claims that states ClaimChainState and revocationequally it could be used as a ref to chaimChain = skipList + index *) 
       nonce: nat ->
       t: time -> 
 			meta : metadata -> 
@@ -49,6 +48,7 @@ assume val vrf: bytes -> (tuple2 (bytes) (bytes))
 assume val enc : key: bytes -> plain: bytes -> Tot(bytes)
 assume val h1: bytes -> bytes
 assume val h2: bytes -> bytes
+assume val getTime: unit -> time
 
 val claimEncoding : 
   privateKeyVRF: bytes -> 
@@ -66,17 +66,59 @@ let claimEncoding privateKeyVRF nonce claim =
   let c = enc ke (concat proof claim_body) in 
   (k, MkKV l c)
 
-
-
 val cipherClaims: cls: list claim -> 
   privateKeyVRF: bytes -> Tot list bytes
+
 let cipherClaims cls privateKeyVRF= 
     let nonce = random () in 
     let f = claimEncoding privateKeyVRF nonce in 
     List.map cls f
 
-  
-
-val generateBlockGenesis: (* self signed*) meta: metadata -> cls: list claim -> claimChainBlock
+val generateBlockGenesis: (* self signed*) meta: metadata ->k: nat ->  cls: list claim{length cls = pow2 k} -> claimChainBlock
 
 let generateBlockGenesis meta cls = 
+    let id = 0 in 
+    let nonce = random () in 
+    let t = getTime () in 
+    let key = keySearchPkVRF metadata.keys in 
+    let claimsCiphers = cipherClaims cls key in 
+    let hashMerkleTree = merkleListGeneration #claim k cls in 
+    let state = concat (concat (toBytes id) (toBytes nonce)) (concat (toBytes time) (hashMerkleTree)) in 
+    let hashPrevious = createEmpty 0 in 
+      let c1 = concat (toBytes id) (toBytes nonce) in 
+      let c2 = concat c1 (toBytes time) in 
+      let c3 = concat c2 (toBytes metadata) in 
+      let c4 = concat c3 claimsCiphered in 
+      let c5 = concat c4 state in 
+      let c6 = concat c5 hashPrevious in 
+    let signature = enc (keySearchPkSig metadata.keys) c6  in  
+    InitClaimChain id nonce t meta claimsCiphers state hashPrevious signature
+
+val generateBlock: bl: claimChainBlock -> k: nat -> cls : list claim {length cls = pow2 k } -> claimChainBlock
+
+let generateBlock bl k cls = 
+    let id = (bl.id + 1) in 
+    let nonce = random () in 
+    let t = getTime () in 
+    let metadata = bl.metadata in 
+    let key = keySearchPkVRF metadata.keys in 
+    let claimsCiphers = cipherClaims cls key in 
+    let hashMerkleTree = merkleListGeneration #claim k cls in 
+    let state = concat (concat (toBytes id) (toBytes nonce)) (concat (toBytes time) (hashMerkleTree)) in 
+      let c1 = concat (toBytes bl.id) (toBytes bl.nonce) in 
+      let c2 = concat c1 (toBytes bl.time) in 
+      let c3 = concat c2 (toBytes bl.metadata) in 
+      let c4 = concat c3 bl.claimsCiphered in 
+      let c5 = concat c4 bl.state in 
+      let c6 = concat c5 bl.hashPrevious in 
+    let hashPrevious = hash c6 in 
+      let c1 = concat (toBytes id) (toBytes nonce) in 
+      let c2 = concat c1 (toBytes time) in 
+      let c3 = concat c2 (toBytes metadata) in 
+      let c4 = concat c3 claimsCiphered in 
+      let c5 = concat c4 state in 
+      let c6 = concat c5 hashPrevious in 
+    let signature = enc (keySearchPkSig metadata.keys) c6  in   
+    InitClaimChain id nonce t meta claimsCiphers state hashPrevious signature
+
+    
