@@ -1,10 +1,7 @@
 module Spec.Claim.Keys
 
 open FStar.Seq
-open SkipList2.Statement
-open SkipList2.Insertion2
-open SkipList2.Properties
-open SkipList2.Search
+open FStar.List.Tot
 
 let bytes =  seq FStar.UInt8.t
 
@@ -16,30 +13,48 @@ type keyEnt =
 
 val isKeyEntPkSig: k: keyEnt -> Tot bool
 let isKeyEntPkSig k = 
-	match k with 
-	|PkSig _ -> true 
-	|_ -> false
+    match k with 
+    |PkSig _ -> true 
+    |_ -> false
 
 
 val isKeyEntPkVRF: k: keyEnt -> Tot bool
 let isKeyEntPkVRF k = 
-	match k with 
-	|PkVRF _ -> true 
-	|_ -> false
+    match k with 
+    |PkVRF _ -> true 
+    |_ -> false
 
 val isKeyEntPkDH: k: keyEnt -> Tot bool
 let isKeyEntPkDH k = 
-	match k with 
-	|PkDH _ -> true 
-	|_ -> false
+    match k with 
+    |PkDH _ -> true 
+    |_ -> false
 
 type cryptoKeyEnt = 
 | CryptoKeyEnt : keys: list keyEnt
-	{
-	(exists (k: keyEnt). isKeyEntPkSig k == true) /\
-	(exists (l: keyEnt). isKeyEntPkDH l == true) /\
-	(exists (m: keyEnt). isKeyEntPkVRF m == true)
-	} -> cryptoKeyEnt
+    {
+        (existsb isKeyEntPkSig keys) /\
+        (existsb isKeyEntPkDH keys) /\
+        (existsb isKeyEntPkVRF keys)
+    } -> cryptoKeyEnt
 
+val keySearchPkSig: l: list keyEnt {existsb isKeyEntPkSig l /\ length l > 0} -> Tot(r: keyEnt{isKeyEntPkSig r})
+let rec keySearchPkSig l = 
+    if (List.length l = 1) then hd l
+    else    
+        match l with
+        | hd::tl -> if isKeyEntPkSig hd then hd else keySearchPkSig tl
 
+val keySearchPkDH: l: list keyEnt {existsb isKeyEntPkDH l /\ length l > 0} -> Tot (r: keyEnt{isKeyEntPkDH r})
+let rec keySearchPkDH l = 
+    if (List.length l = 1) then hd l
+    else    
+        match l with
+        | hd::tl -> if isKeyEntPkDH hd then hd else keySearchPkDH tl
 
+val keySearchPkVRF: l: list keyEnt {existsb isKeyEntPkVRF l /\ length l > 0} -> Tot (r: keyEnt{isKeyEntPkVRF r})
+let rec keySearchPkVRF l = 
+    if (List.length l = 1) then hd l
+    else    
+        match l with
+        | hd::tl -> if isKeyEntPkVRF hd then hd else keySearchPkVRF tl     
