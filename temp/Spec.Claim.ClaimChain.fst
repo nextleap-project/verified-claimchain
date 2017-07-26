@@ -9,6 +9,7 @@ open FStar.Constructive
 
 open Spec.Claim.Metadata
 open Spec.Claim.Keys
+open Spec.Claim.Capabilities
 
 
 let bytes =  seq FStar.UInt8.t
@@ -39,32 +40,6 @@ type claimChainBlock  =
       signature :bytes -> 
     ->    
 			claimChainBlock f
-
-
-type kv (a: eqtype) (b:eqtype) = 
-  |MkKV : key: a -> value : b -> kv a b      
-
-assume val vrf: bytes -> (tuple2 (bytes) (bytes))
-assume val enc : key: bytes -> plain: bytes -> Tot(bytes)
-assume val h1: bytes -> bytes
-assume val h2: bytes -> bytes
-assume val getTime: unit -> time
-
-val claimEncoding : 
-  privateKeyVRF: bytes -> 
-  nonce: nat -> 
-  claim_label: string -> 
-  claim_body : string -> Tot (tuple2 (bytes) (kv bytes bytes)) 
-
-let claimEncoding privateKeyVRF nonce claim = 
-  let claim_label = getClaimLabel claim in 
-  let claim_body = getClaimBosy claim in 
-  let ncl = concat nonce claim_label in 
-  let k, proof = vrf ncl in 
-  let l = h1 k in 
-  let ke = h2 k in 
-  let c = enc ke (concat proof claim_body) in 
-  (k, MkKV l c)
 
 val cipherClaims: cls: list claim -> 
   privateKeyVRF: bytes -> Tot list bytes
