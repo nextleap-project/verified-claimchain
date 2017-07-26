@@ -6,20 +6,17 @@ open SkipList2.Insertion2
 open SkipList2.Properties
 open SkipList2.Search
 open Spec.Claim.Keys
+open Spec.Claim.Common
 
 type indentifier =
     |InitIndent : source: string -> identifier : string -> indentifier
-
-assume val hash: 'a -> bytes
-assume val toBytes: input : 'a -> bytes
-assume val concat: bytes-> bytes -> bytes
 
 type metadata =
     |InitMetadata:
         screenName: option string ->
         realName: option string ->
         identifiers: option (list indentifier) ->
-        keys: list keyEnt ->
+        keys: cryptoKeyEnt ->
         hashMetadata: bytes
         {
         hashMetadata =

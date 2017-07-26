@@ -3,7 +3,7 @@ module Spec.Claim.Keys
 open FStar.Seq
 open FStar.List.Tot
 
-let bytes =  seq FStar.UInt8.t
+open Spec.Claim.Common
 
 type keyEnt = 
 |InitKeyEnt : source: string -> key: bytes -> keyEnt

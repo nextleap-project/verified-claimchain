@@ -4,15 +4,12 @@ open FStar.Seq
 open FStar.Mul
 open FStar.List.Tot
 
-type bytes = seq nat
+open Spec.Claim.Common
+
 type hash_t = bytes
 
-assume val hash: 'a -> Tot bytes
-assume val concat : a: bytes -> b: bytes -> Tot bytes
-
-
 type merkleTree (#a : eqtype) : nat -> hash_t ->Type = 
-    |MLeaf: element : a -> merkleTree #a 0 (hash element)
+    |MLeaf: element : a -> merkleTree #a 0 (hash (toBytes element))
     |MNode: #level: nat -> #h1: hash_t -> #h2: hash_t -> 
         lnode: merkleTree #a level h1->
         rnode: merkleTree #a level h2-> 
@@ -27,7 +24,7 @@ val _merkleTreeGenerationL0: #a: eqtype -> l:list a -> Tot (r: list (merklePair 
 
 let rec _merkleTreeGenerationL0 #a l = 
     match l with
-    | hd1:: tl ->let h = hash hd1 in 
+    | hd1:: tl ->let h = hash (toBytes hd1) in 
                     let element = (|h, MLeaf hd1|)
                     in  List.append [element] (_merkleTreeGenerationL0 #a tl)
     | [] -> [] 
