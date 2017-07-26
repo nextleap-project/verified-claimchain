@@ -14,12 +14,12 @@ val claimEncoding :
   nonce: bytes -> 
   claim: claim -> Tot (tuple2 (bytes) (kv bytes bytes)) 
 
-let claimEncoding privateKeyVRF nonce claim = 
+let claimEncoding privateKeyOwnerVRF nonce claim = 
   let claimLabel = getClaimLabel claim in
   let claimLabel = toBytes claimLabel in  
   let claimBody = getClaimBody claim in 
   let ncl = concat nonce claimLabel in 
-  let k, proof = vrf ncl in 
+  let k, proof = vrf privateKeyOwnerVRF ncl in 
   let l = h1 k in 
   let ke = h2 k in 
   let c = enc ke (concat proof claimBody) in 
@@ -40,7 +40,6 @@ let encodeCapability privateKeyOwnerDH publicKeyReaderDH nonce claimLabel k =
     let key = h4 body in 
     let pa = enc key k in 
 (la, pa)
-
 
 val computeCapabilityLookupKey : privateKeyOwnerDH: key -> 
             publicKeyReaderDH: key -> 
@@ -71,3 +70,22 @@ let decodeCapability privateKeyReaderDH ownerPublicKeyDH nonce claimLabel capabi
     let k = dec key capabilityCiphered in 
     let l = h1 k in 
     (k, l)
+
+
+
+
+
+val decodeClaim: publicKeyOwnerVRF: key -> nonce: bytes -> claimLabel: string -> k: bytes -> cipheredClaim: bytes -> Tot (claimBody : option bytes)
+
+let decodeClaim publicKeyOwnerVRF nonce claimLabel k cipheredClaim = 
+  let ke = h2 k in 
+  let claimLabel = toBytes claimLabel in  
+  let proofClaim = dec ke cipheredClaim in 
+  let (proof, claim) = divideHashProof proofClaim in 
+  let vrfPr = vrfProof k proof (concat nonce claimLabel) in 
+    if vrfPr = true then 
+      Some claim 
+    else 
+      None
+
+

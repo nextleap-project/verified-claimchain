@@ -17,7 +17,11 @@ assume val h2: bytes -> bytes
 assume val h3: bytes -> bytes
 assume val h4: bytes -> bytes
 
-assume val vrf: bytes -> (tuple2 (bytes) (bytes))
+assume val vrf: keyVRF: bytes -> plaintext: bytes -> Tot(tuple2 (bytes) (bytes))
+assume val vrfProof: hash: bytes -> proof: bytes -> plainText: bytes -> Tot bool
+
+assume val divideHashProof: bytes -> (bytes * bytes)
+
 assume val enc : key: bytes -> plain: bytes -> Tot(bytes)
 assume val dec: key: bytes -> ciphered: bytes -> Tot bytes
 assume val lemmaEncDec : key: bytes -> plain: bytes -> Lemma (ensures( plain =  (let cipherText = enc key plain in 

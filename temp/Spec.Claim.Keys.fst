@@ -11,6 +11,14 @@ type keyEnt =
 |PkVRF : key : bytes -> keyEnt 
 |PkDH : key : bytes -> keyEnt
 
+val getKeyAsBytes: k: keyEnt -> Tot bytes
+let getKeyAsBytes k = 
+    match k with 
+    | InitKeyEnt _ key -> key 
+    | PkSig key -> key
+    | PkVRF key -> key
+    | PkDH key -> key
+
 val isKeyEntPkSig: k: keyEnt -> Tot bool
 let isKeyEntPkSig k = 
     match k with 
@@ -35,7 +43,8 @@ type cryptoKeyEnt =
     {
         (existsb isKeyEntPkSig keys) /\
         (existsb isKeyEntPkDH keys) /\
-        (existsb isKeyEntPkVRF keys)
+        (existsb isKeyEntPkVRF keys) /\ 
+        length keys > 0
     } -> cryptoKeyEnt
 
 val keySearchPkSig: l: list keyEnt {existsb isKeyEntPkSig l /\ length l > 0} -> Tot(r: keyEnt{isKeyEntPkSig r})
@@ -44,6 +53,11 @@ let rec keySearchPkSig l =
     else    
         match l with
         | hd::tl -> if isKeyEntPkSig hd then hd else keySearchPkSig tl
+
+val crKeySearchPkSig: l: cryptoKeyEnt -> Tot (r: keyEnt {isKeyEntPkSig r})
+let crKeySearchPkSig l = 
+    let keys = l.keys in 
+    keySearchPkSig keys
 
 val keySearchPkDH: l: list keyEnt {existsb isKeyEntPkDH l /\ length l > 0} -> Tot (r: keyEnt{isKeyEntPkDH r})
 let rec keySearchPkDH l = 

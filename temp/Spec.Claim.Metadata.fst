@@ -28,6 +28,9 @@ type metadata =
             let c6 = toBytes keys in
             let c7 = concat c5 c6 in 
             hash c7)
-        } ->
-        metadata
-    |NullMetadata : metadata
+        } -> metadata 
+
+
+val getKeys: meta: metadata -> Tot cryptoKeyEnt
+let getKeys meta = 
+    meta.keys

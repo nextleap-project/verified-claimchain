@@ -2,7 +2,6 @@ module Spec.Claim.ClaimChain
 
 open FStar.Seq
 open Spec.Claim
-open SkipList2.Statement
 
 open Spec.Claim.Metadata
 open Spec.Claim.Keys
@@ -30,14 +29,16 @@ let cipherClaims cls privateKeyVRF=
     let f = claimEncoding privateKeyVRF nonce in 
     List.map f cls
 
-    (*)
-val generateBlockGenesis: (* self signed*) meta: metadata ->k: nat ->  cls: list claim{length cls = pow2 k} -> claimChainBlock
+(*)
+val generateBlockGenesis: (* self signed*) meta: metadata -> claimChainBlock
 
 let generateBlockGenesis meta  k cls = 
     let id = 0 in 
     let nonce = random () in 
     let t = getTime () in 
-    let key = keySearchPkVRF metadata.keys in 
+    let keys = getKeys meta in 
+    let key = crKeySearchPkSig keys in 
+    let key = getKeyAsBytes key in 
     let claimsCiphered = cipherClaims cls key in 
     let hashMerkleTree = merkleListGeneration #claim k claimsCiphered in 
     let state = concat (concat (toBytes id) (toBytes nonce)) (concat (toBytes time) (hashMerkleTree)) in 
@@ -50,7 +51,7 @@ let generateBlockGenesis meta  k cls =
       let c6 = concat c5 hashPrevious in 
     let signature = enc (keySearchPkSig metadata.keys) c6  in  
     InitClaimChain id nonce t meta claimsCiphered state hashPrevious signature
-
+(*)
 val generateBlock: bl: claimChainBlock -> k: nat -> cls : list claim {length cls = pow2 k } -> claimChainBlock
 
 let generateBlock bl k cls = 
