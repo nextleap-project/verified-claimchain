@@ -6,12 +6,11 @@ open Spec.Claim.Common
 open Spec.Claim.Metadata
 
 type claim = 
-	|InitClaim: 
+	|Empty: 
 		label: string -> 
 		timeStamp: (k : time) ->  (* here I use time as some kind of nonce for signatures (in case of having
 		not randomized sigs) *)
-		test: list int -> 
-		signature : bytes{verify signature (toBytes test) } -> claim (* test purposes*)
+		signature : bytes {verify signature (concat (toBytes label) (toBytes timeStamp))} ->  claim (* test purposes*)
 	|KeyBindingClaim: 
 		label: string -> 
 		timeStamp : (k : time { k> 0}) -> 
@@ -33,7 +32,7 @@ type claim =
 val getClaimLabel: cl: claim -> string
 let getClaimLabel cl = 
 	match cl with
-	| InitClaim  label _ _ _ -> label
+	| Empty  label _ _ -> label
 	| KeyBindingClaim  label _ _ _ _ -> label
 	| ClaimChainState  label _ _ _ _  -> label
 	| Revocation label _ _ _-> label
@@ -43,7 +42,7 @@ assume val getClaimBody: cl: claim -> bytes
 val getClaimTimeStamp: cl: claim -> time
 let getClaimTimeStamp cl = 
 	match cl with
-	| InitClaim _ timeStamp _ _  -> timeStamp
+	| Empty _ timeStamp _   -> timeStamp
 	| KeyBindingClaim _ timeStamp _ _ _ -> timeStamp
 	| ClaimChainState _ timeStamp _ _ _ -> timeStamp
 	| Revocation _ timeStamp _ _ -> timeStamp

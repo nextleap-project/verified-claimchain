@@ -27,7 +27,6 @@ assume val dec: key: bytes -> ciphered: bytes -> Tot bytes
 assume val lemmaEncDec : key: bytes -> plain: bytes -> Lemma (ensures( plain =  (let cipherText = enc key plain in 
                                                                         dec key cipherText )))
 
-
 assume val getTime: unit -> time
 assume val random: unit -> Tot bytes
 

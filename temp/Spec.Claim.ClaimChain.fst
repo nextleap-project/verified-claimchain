@@ -1,8 +1,9 @@
 module Spec.Claim.ClaimChain
 
 open FStar.Seq
-open Spec.Claim
+open FStar.List.Tot
 
+open Spec.Claim
 open Spec.Claim.Metadata
 open Spec.Claim.Keys
 open Spec.Claim.Capabilities
@@ -28,6 +29,28 @@ let cipherClaims cls privateKeyVRF=
     let nonce = random () in 
     let f = claimEncoding privateKeyVRF nonce in 
     List.map f cls
+
+assume private val generateBlockGeneral: listClaims: list claim -> 
+    accessControl: list (tuple2 (label: string) (publicKeyReader: key)) -> 
+    meta: metadata -> reference: option(list claimChainBlock) -> Tot claimChainBlock
+
+
+val generateBlockGenesis: listClaims: list claim -> 
+    accessControl: list (tuple2 (label: string) (publicKeyReader: key)) -> 
+    meta: metadata -> Tot claimChainBlock
+
+let generateBlockGenesis listClaims accessControl meta = 
+    generateBlockGeneral listClaims accessControl meta None 
+
+val generateBlock: listClaims: list claim -> 
+    accessControl: list (tuple2 (label: string) (publicKeyReader: key)) ->   
+    previousList: list claimChainBlock{length previousList > 0} -> 
+    Tot claimChainBlock
+
+let generateBlock listClaims accessControl previousList = 
+  let previous = hd previousList in 
+  generateBlockGeneral listClaims accessControl (previous.meta) (Some previousList) 
+
 
 (*)
 val generateBlockGenesis: (* self signed*) meta: metadata -> claimChainBlock
@@ -79,6 +102,4 @@ let generateBlock bl k cls =
     let signature = enc (keySearchPkSig metadata.keys) c6  in   
     InitClaimChain id nonce t metadata claimsCiphered state hashPrevious signature
 
-    
-
-
+  
