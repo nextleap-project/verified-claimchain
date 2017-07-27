@@ -4,15 +4,12 @@ open Spec.Claim
 open Spec.Claim.Metadata
 open Spec.Claim.Keys
 open Spec.Claim.Common
-
-type kv (a: eqtype) (b:eqtype) = 
-  |MkKV : key: a -> value : b -> kv a b      
-
+open Spec.Claim.Map
 
 val claimEncoding : 
   privateKeyVRF: bytes -> 
   nonce: bytes -> 
-  claim: claim -> Tot (tuple2 (bytes) (kv bytes bytes)) 
+  claim: claim -> Tot (kv (bytes) (tuple2 bytes bytes)) 
 
 let claimEncoding privateKeyOwnerVRF nonce claim = 
   let claimLabel = getClaimLabel claim in
@@ -23,7 +20,7 @@ let claimEncoding privateKeyOwnerVRF nonce claim =
   let l = h1 k in 
   let ke = h2 k in 
   let c = enc ke (concat proof claimBody) in 
-  (k, MkKV l c)
+  MkKV k (l, c)
 
 val encodeCapability : privateKeyDH : key -> 
         publicKeyReaderDH: key -> 

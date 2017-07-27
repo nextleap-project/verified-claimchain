@@ -36,4 +36,3 @@ assume val verify : signature: bytes -> data: bytes -> Tot bool
 assume val signVerif: input: bytes -> 
   Lemma 
   (ensures (verify (sign input) input == true ))
-

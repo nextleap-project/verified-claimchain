@@ -2,6 +2,7 @@ module Spec.Claim.ClaimChain
 
 open FStar.Seq
 open FStar.List.Tot
+open FStar.Option
 
 open Spec.Claim
 open Spec.Claim.Metadata
@@ -9,97 +10,129 @@ open Spec.Claim.Keys
 open Spec.Claim.Capabilities
 open Spec.Claim.Common
 open Spec.Claim.MerkleTree
+open Spec.Claim.Map
 
 type claimChainBlock  = 
 	|InitClaimChain : 
-			id: nat -> (* reference to ClaimChain to have claims that states ClaimChainState and revocationequally it could be used as a ref to chaimChain = skipList + index *) 
-      nonce: nat ->
+     (* reference to ClaimChain to have claims that states ClaimChainState and revocationequally it could be used as a ref to chaimChain = skipList + index *) 
+      nonce: bytes ->
       t: time -> 
 			meta : metadata -> 
-			claimsCiphered: bytes -> 
-			state: bytes -> (* id + hash + time *)
+			hashMT: bytes -> 
 			hashPrevious:bytes -> 
-      signature :bytes ->    
+      hash: bytes -> 
+      signature :bytes ->   
 			claimChainBlock
 
-val cipherClaims: cls: list claim -> 
-  privateKeyVRF: bytes -> ML (list (tuple2 (bytes) (kv bytes bytes)))
+val cipherClaims: cls:  map string claim-> nonce: bytes -> 
+  privateKeyVRF: bytes -> ML (map string (kv (bytes) (tuple2 bytes bytes)))
 
-let cipherClaims cls privateKeyVRF= 
-    let nonce = random () in 
+let cipherClaims cls nonce privateKeyVRF= 
+    let v = Spec.Claim.Map.values cls in 
     let f = claimEncoding privateKeyVRF nonce in 
-    List.map f cls
+    let lst = List.map f v in 
+    let keys = Spec.Claim.Map.keySet cls in 
+    MapList keys lst
 
-assume private val generateBlockGeneral: listClaims: list claim -> 
-    accessControl: list (tuple2 (label: string) (publicKeyReader: key)) -> 
-    meta: metadata -> reference: option(list claimChainBlock) -> Tot claimChainBlock
+val oneUserEncoding: privateKeyDH: key ->  
+        row:  kv key (list string) -> 
+        claims: (map string (kv (bytes) (tuple2 bytes bytes))) -> 
+        nonce : bytes -> 
+        ML (list (tuple2 (la: bytes) (pa : bytes)))
 
+let rec oneUserEncoding privateKeyDH row claims nonce= 
+    let labels = row.value in 
+      match labels with 
+      | hd:: tl ->  let claim = Spec.Claim.Map.get claims hd in (*option kv of bytes + tuple b b  *) 
+                    let elem =   
+                      (if isSome claim then 
+                        let claimI = FStar.Option.get claim in 
+                        let k = claimI.key in 
+                        [encodeCapability privateKeyDH row.key nonce hd k]
+                      else [])
+                    in List.append elem (oneUserEncoding privateKeyDH (MkKV row.key tl) claims nonce) 
+      | [] -> []              
 
-val generateBlockGenesis: listClaims: list claim -> 
-    accessControl: list (tuple2 (label: string) (publicKeyReader: key)) -> 
-    meta: metadata -> Tot claimChainBlock
+val _allUserEncoding : accessControl: map (publicKeyReader: key) (labels: list string){size accessControl > 0} -> 
+                        privateKeyDH: key -> 
+                        claims: (map string (kv (bytes) (tuple2 bytes bytes))) -> 
+                        nonce : bytes -> 
+                        counter: nat{counter < size accessControl} -> 
+                        l: (list (tuple2 (la: bytes) (pa : bytes))) -> 
+                      ML (list (tuple2 (la: bytes) (pa : bytes)))
+                      
+let rec _allUserEncoding accessControl privateKeyDH claims nonce counter l = 
+      let keyValue = Spec.Claim.Map.index accessControl counter in 
+      let r = oneUserEncoding privateKeyDH keyValue claims nonce  in 
+      if (counter + 1 < size accessControl) then 
+        let l =  List.append l r in _allUserEncoding accessControl privateKeyDH claims nonce (counter +1) l
+      else l                
 
-let generateBlockGenesis listClaims accessControl meta = 
-    generateBlockGeneral listClaims accessControl meta None 
+val allUserEncoding: accessControl: map (publicKeyReader: key) (labels: list string){size accessControl > 0}-> 
+                        privateKeyDH: key -> 
+                        claims: (map string (kv (bytes) (tuple2 bytes bytes))) -> 
+                        nonce : bytes -> 
+                         ML (list (tuple2 (la: bytes) (pa : bytes)))
 
-val generateBlock: listClaims: list claim -> 
-    accessControl: list (tuple2 (label: string) (publicKeyReader: key)) ->   
+let allUserEncoding accessControl privateKeyDH claims nonce = 
+      _allUserEncoding accessControl privateKeyDH claims nonce 0 [] 
+
+assume val lstComplete: list 'a -> Tot (k: nat & (l: list 'a {List.length l = pow2 k}))
+
+val fKeys: a: kv (bytes) (tuple2 bytes bytes) -> tuple2 bytes bytes
+let fKeys a = a.value
+
+private val generateBlockGeneral:  privateKeyDH: key ->privateKeyVRF: key ->   listClaims: map string claim -> 
+    accessControl: map (publicKeyReader: key) (labels: list string) {size accessControl > 0} -> 
+    meta: metadata -> reference: option(list claimChainBlock) -> ML claimChainBlock
+
+let generateBlockGeneral privateKeyDH privateKeyVRF listClaims accessControl meta reference = 
+    let nonce = random () in 
+    let t = getTime () in 
+    let listEncodedClaims = cipherClaims listClaims nonce privateKeyVRF in  (* ML (map string (kv (bytes) (tuple2 bytes bytes))) *)
+    let claims = values listEncodedClaims in (*  (tuple2 bytes bytes)) *)
+    let claims = List.map fKeys claims in 
+    let vrfs = keySet listEncodedClaims in 
+    let encodings = allUserEncoding accessControl privateKeyDH listEncodedClaims nonce in (* (list (tuple2 (la: bytes) (pa : bytes))) *) 
+    let listMT = List.append claims encodings in 
+    let (|k, lst|) = lstComplete listMT in 
+    let hashMerkleTree = merkleListGeneration k listMT in 
+    let hashPrevious = 
+      (
+        if isNone reference 
+            then Seq.createEmpty
+        else   
+          (
+              if FStar.List.Tot.length (FStar.Option.get reference) > 0 then 
+                 (FStar.List.Tot.hd (FStar.Option.get reference)).hash 
+              else 
+                  Seq.createEmpty
+          )
+      ) in 
+    let hash = concat 
+      (concat 
+          (concat 
+            (concat (toBytes nonce) (toBytes t))
+            (toBytes metadata)
+          ) 
+          hashMerkleTree)
+    hashPrevious in  
+    let signature = sign hash in 
+    InitClaimChain nonce t meta hashMerkleTree hashPrevious hash signature
+
+val generateBlockGenesis: privateKeyDH: key ->privateKeyVRF: key ->  listClaims: map string claim -> 
+    accessControl: map (publicKeyReader: key) (labels: list string) {size accessControl > 0} -> 
+    meta: metadata -> ML claimChainBlock
+
+let generateBlockGenesis  privateKeyDH privateKeyVRF listClaims accessControl meta = 
+    generateBlockGeneral  privateKeyDH privateKeyVRF listClaims accessControl meta None 
+
+(*)
+val generateBlock: privateKeyDH: key -> privateKeyVRF:key ->  listClaims: map string claim -> 
+    accessControl: map (publicKeyReader: key) (labels: list string) {size accessControl > 0}  
     previousList: list claimChainBlock{length previousList > 0} -> 
     Tot claimChainBlock
 
-let generateBlock listClaims accessControl previousList = 
+let generateBlock  privateKeyDH privateKeyVRF listClaims accessControl previousList = 
   let previous = hd previousList in 
   generateBlockGeneral listClaims accessControl (previous.meta) (Some previousList) 
-
-
-(*)
-val generateBlockGenesis: (* self signed*) meta: metadata -> claimChainBlock
-
-let generateBlockGenesis meta  k cls = 
-    let id = 0 in 
-    let nonce = random () in 
-    let t = getTime () in 
-    let keys = getKeys meta in 
-    let key = crKeySearchPkSig keys in 
-    let key = getKeyAsBytes key in 
-    let claimsCiphered = cipherClaims cls key in 
-    let hashMerkleTree = merkleListGeneration #claim k claimsCiphered in 
-    let state = concat (concat (toBytes id) (toBytes nonce)) (concat (toBytes time) (hashMerkleTree)) in 
-    let hashPrevious = createEmpty 0 in 
-      let c1 = concat (toBytes id) (toBytes nonce) in 
-      let c2 = concat c1 (toBytes time) in 
-      let c3 = concat c2 (toBytes metadata) in 
-      let c4 = concat c3 claimsCiphered in 
-      let c5 = concat c4 state in 
-      let c6 = concat c5 hashPrevious in 
-    let signature = enc (keySearchPkSig metadata.keys) c6  in  
-    InitClaimChain id nonce t meta claimsCiphered state hashPrevious signature
-(*)
-val generateBlock: bl: claimChainBlock -> k: nat -> cls : list claim {length cls = pow2 k } -> claimChainBlock
-
-let generateBlock bl k cls = 
-    let id = (bl.id + 1) in 
-    let nonce = random () in 
-    let t = getTime () in 
-    let metadata = bl.meta in 
-    let key = keySearchPkVRF metadata.keys in 
-    let claimsCiphered = cipherClaims cls key in 
-    let hashMerkleTree = merkleListGeneration #claim k cls in 
-    let state = concat (concat (toBytes id) (toBytes nonce)) (concat (toBytes time) (hashMerkleTree)) in 
-      let c1 = concat (toBytes bl.id) (toBytes bl.nonce) in 
-      let c2 = concat c1 (toBytes bl.t) in 
-      let c3 = concat c2 (toBytes bl.meta) in 
-      let c4 = concat c3 bl.claimsCiphered in 
-      let c5 = concat c4 bl.state in 
-      let c6 = concat c5 bl.hashPrevious in 
-    let hashPrevious = hash c6 in 
-      let c1 = concat (toBytes id) (toBytes nonce) in 
-      let c2 = concat c1 (toBytes time) in 
-      let c3 = concat c2 (toBytes metadata) in 
-      let c4 = concat c3 claimsCiphered in 
-      let c5 = concat c4 state in 
-      let c6 = concat c5 hashPrevious in 
-    let signature = enc (keySearchPkSig metadata.keys) c6  in   
-    InitClaimChain id nonce t metadata claimsCiphered state hashPrevious signature
-
-  
