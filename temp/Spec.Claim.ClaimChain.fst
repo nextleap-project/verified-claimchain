@@ -136,3 +136,18 @@ val generateBlock: privateKeyDH: key -> privateKeyVRF:key ->  listClaims: map st
 let generateBlock  privateKeyDH privateKeyVRF listClaims accessControl previousList = 
   let previous = hd previousList in 
   generateBlockGeneral listClaims accessControl (previous.meta) (Some previousList) 
+*)
+
+val claimRetrieval: privateKeyReaderDH: key -> 
+                    publicKeyReaderDH: key -> 
+                    publicKeyOwnerDH:key -> 
+                    publicKeyOwnerVRF : key -> 
+                    tree_hash: bytes -> 
+                    nonce: bytes -> claimLabel: string -> Tot (option bytes)
+
+let claimRetrieval privateKeyReaderDH publicKeyReaderDH publicKeyOwnerDH publicKeyOwnerVRF tree_hash nonce claimLabel= 
+  let lookUpKey = computeCapabilityLookupKey privateKeyReaderDH publicKeyReaderDH nonce claimLabel in 
+  let capabilityCiphered = queryMerkleTree tree_hash lookUpKey in
+  let (k, l) = decodeCapability privateKeyReaderDH publicKeyOwnerDH nonce claimLabel capabilityCiphered in 
+  let c = queryMerkleTree tree_hash l  in 
+  let claimBody = decodeClaim publicKeyOwnerVRF nonce claimLabel k c in claimBody

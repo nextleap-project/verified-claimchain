@@ -68,11 +68,9 @@ let decodeCapability privateKeyReaderDH ownerPublicKeyDH nonce claimLabel capabi
     let l = h1 k in 
     (k, l)
 
-
-
-
-
-val decodeClaim: publicKeyOwnerVRF: key -> nonce: bytes -> claimLabel: string -> k: bytes -> cipheredClaim: bytes -> Tot (claimBody : option bytes)
+val decodeClaim: publicKeyOwnerVRF: key -> nonce: bytes -> 
+    claimLabel: string -> k: bytes -> 
+    cipheredClaim: bytes -> Tot (claimBody : option bytes)
 
 let decodeClaim publicKeyOwnerVRF nonce claimLabel k cipheredClaim = 
   let ke = h2 k in 

@@ -91,3 +91,5 @@ let merkleListGeneration #a k l =
             assert (k>0);
              _merkleListGeneration #a 0 k treeLeafs
         )
+
+assume val queryMerkleTree: hash: bytes -> key: bytes -> Tot bytes
