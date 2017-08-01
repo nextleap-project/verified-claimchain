@@ -28,9 +28,12 @@ val cipherClaims: cls:  map string claim-> nonce: bytes ->
   privateKeyVRF: bytes -> ML (map string (kv (bytes) (tuple2 bytes bytes)))
 
 let cipherClaims cls nonce privateKeyVRF= 
-    let v = Spec.Claim.Map.values cls in 
+    let v = Spec.Claim.Map.values cls in (* list claims *)
+    assert(length v = size cls);
     let f = claimEncoding privateKeyVRF nonce in 
-    let lst = List.map f v in 
+    let lst = lemma_map_imp v f in 
+    lemma_map v f; 
+    assert(length lst = length v);
     let keys = Spec.Claim.Map.keySet cls in 
     MapList keys lst
 
@@ -96,7 +99,7 @@ let generateBlockGeneral privateKeyDH privateKeyVRF listClaims accessControl met
     let encodings = allUserEncoding accessControl privateKeyDH listEncodedClaims nonce in (* (list (tuple2 (la: bytes) (pa : bytes))) *) 
     let listMT = List.append claims encodings in 
     let (|k, lst|) = lstComplete listMT in 
-    let hashMerkleTree = merkleListGeneration k listMT in 
+    let hashMerkleTree = merkleListGeneration k lst in 
     let hashPrevious = 
       (
         if isNone reference 
@@ -127,16 +130,16 @@ val generateBlockGenesis: privateKeyDH: key ->privateKeyVRF: key ->  listClaims:
 let generateBlockGenesis  privateKeyDH privateKeyVRF listClaims accessControl meta = 
     generateBlockGeneral  privateKeyDH privateKeyVRF listClaims accessControl meta None 
 
-(*)
 val generateBlock: privateKeyDH: key -> privateKeyVRF:key ->  listClaims: map string claim -> 
-    accessControl: map (publicKeyReader: key) (labels: list string) {size accessControl > 0}  
+    accessControl: map (publicKeyReader: key) (labels: list string) {size accessControl > 0}  ->
     previousList: list claimChainBlock{length previousList > 0} -> 
-    Tot claimChainBlock
+    ML claimChainBlock
 
 let generateBlock  privateKeyDH privateKeyVRF listClaims accessControl previousList = 
   let previous = hd previousList in 
-  generateBlockGeneral listClaims accessControl (previous.meta) (Some previousList) 
-*)
+  generateBlockGeneral  privateKeyDH privateKeyVRF  listClaims accessControl (previous.meta) (Some previousList) 
+
+
 
 val claimRetrieval: privateKeyReaderDH: key -> 
                     publicKeyReaderDH: key -> 

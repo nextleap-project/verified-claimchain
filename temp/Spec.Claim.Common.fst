@@ -36,3 +36,13 @@ assume val verify : signature: bytes -> data: bytes -> Tot bool
 assume val signVerif: input: bytes -> 
   Lemma 
   (ensures (verify (sign input) input == true ))
+
+val lemma_map: l: list 'a -> f: ('a -> 'b) -> 
+		Lemma (ensures (FStar.List.Tot.length (FStar.List.Tot.map f l) = FStar.List.Tot.length l))
+
+let rec lemma_map l f =  () 
+
+val lemma_map_imp: l: list 'a -> f: ('a -> 'b) -> Tot (lst : list 'b{FStar.List.Tot.length l = FStar.List.Tot.length lst })
+let lemma_map_imp l f = 
+	let lst = FStar.List.Tot.map f l in 
+	lemma_map l f; lst
