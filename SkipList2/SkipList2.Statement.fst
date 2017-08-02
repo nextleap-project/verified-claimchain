@@ -12,9 +12,10 @@ type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
 type non_empty_list 'a = lst: list 'a{Cons? lst}
 
 type skipList(a:eqtype) (f:cmp a) = 
-| Mk:  values: seq(a){sorted f values}-> 
+| Mk:  values: seq(a){sorted f values/\ length values >0}-> 
 indexes : seq(non_empty_list nat)
-{Seq.length values = Seq.length indexes} -> skipList a f 
+{Seq.length values = Seq.length indexes} -> r: skipList a f
+
 
 
 val getValues : #a: eqtype -> #f: cmp(a)-> sl:skipList a f-> Tot(seq a)
@@ -25,31 +26,34 @@ let getValues #a #f sl =
 val length: #a: eqtype -> #f: cmp(a) -> sl: skipList a f -> Tot(nat)
 let length #a #f sl =
 	let values = getValues sl in 
-	Seq.length values		
+	Seq.length values	
+
+val lemma_lengthSkipList: #a: eqtype -> #f: cmp a -> sl: skipList a f -> Lemma (ensures (length sl > 0))
+let lemma_lengthSkipList #a #f sl = ()		
 
 val getIndexes: #a : eqtype-> #f: cmp(a) -> sl:skipList a f -> Tot(seq(non_empty_list nat))
 let getIndexes #a #f sl = 
 	match sl with 
 	| Mk v i -> i
 
-val getValue: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  Seq.length(getValues #a sl)} -> Tot(a)
+val getValue: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  length sl} -> Tot(a)
 let getValue #a #f sl nth = 
 	let values = getValues #a sl in Seq.index values nth
 
 
-val getIndex: #a:eqtype-> #f: cmp(a) -> sl:skipList a f-> nth : nat{nth <  Seq.length(getIndexes #a sl)} -> Tot(non_empty_list nat)
+val getIndex: #a:eqtype-> #f: cmp(a) -> sl:skipList a f-> nth : nat{nth <  length sl} -> Tot(non_empty_list nat)
 let getIndex #a #f sl nth = 
 	let indexes = getIndexes #a sl in Seq.index indexes nth
 
-val getCurrentValue: #a: eqtype -> #f:cmp(a) -> sl: skipList a f{length sl > 0} -> Tot(a)
+val getCurrentValue: #a: eqtype -> #f:cmp(a) -> sl: skipList a f -> Tot(a)
 let getCurrentValue #a #f sl = 
 	getValue #a #f sl 0
 
-val getCurrentIndex: #a : eqtype -> #f:cmp(a) -> sl : skipList a f{length sl > 0} -> Tot(non_empty_list nat)
+val getCurrentIndex: #a : eqtype -> #f:cmp(a) -> sl : skipList a f -> Tot(non_empty_list nat)
 let getCurrentIndex #a #f sl = 
 	getIndex #a #f sl 0
 
-val getTuple: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  Seq.length(getIndexes #a sl)} -> Tot(a*list nat)
+val getTuple: #a:eqtype-> #f: cmp(a) -> sl: skipList a f->nth:nat{nth <  length sl} -> Tot(a*list nat)
 let getTuple #a #f sl nth = 
 	let v = getValue #a sl nth in 
 	let i = getIndex #a sl nth in (v,i)
@@ -63,7 +67,7 @@ let hd_ #a #f sl =
 	else 
 		None
 
-val hd: #a:eqtype-> #f: cmp(a) -> sl:skipList a f{Seq.length (getIndexes #a sl) > 0} -> Tot(a)
+val hd: #a:eqtype-> #f: cmp(a) -> sl:skipList a f -> Tot(a)
 let hd #a #f sl = 
 	getValue #a sl 0
 
@@ -118,15 +122,13 @@ let rec lst_z_g lst value_to_put elements_number counter  =
 	lst_z_g lst value_to_put elements_number (counter + 1) 
 
 val create : #a : eqtype -> #f:(cmp a ) -> value_max : a -> elements_number: nat {elements_number > 0} ->
-	Tot(sl: skipList a f {length sl > 0} )
+	Tot(skipList a f)
 
 let create #a #f value_max elements_number = 
 	let seq_values = create #a 1 value_max in 
 	let lst_indexes = lst_z_g [0] 0 elements_number 0 in 
 	let seq_indexes = create 1 lst_indexes in 
 	Mk seq_values seq_indexes
-
-
 
 val last_element_indexed: #a: eqtype -> #f: cmp a -> sl: skipList a f {length sl > 1} -> 
 							counter_global: nat{counter_global < (length sl -1)} -> 
@@ -136,7 +138,7 @@ let last_element_indexed #a #f sl counter_global =
 	let len = (List.length ind) -1  in 
 	List.index ind len
 
-val last_element_values: #a: eqtype -> #f: cmp a -> sl: skipList a f {length sl > 1} -> Tot(a)
+val last_element_values: #a: eqtype -> #f: cmp a -> sl: skipList a f -> Tot(a)
 let last_element_values #a #f sl = 
 	let values = getValues sl in 
 	let length = Seq.length values -1 in 

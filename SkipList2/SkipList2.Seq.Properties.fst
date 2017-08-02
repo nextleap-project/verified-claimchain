@@ -8,13 +8,27 @@ module List = FStar.List.Tot
 
 type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
 
-val seqLast: s: seq 'a {Seq.length s > 0}-> Tot 'a
+val seqLast: s: seq 'a-> Tot 'a
 let seqLast s = 
 	(Seq.index s (Seq.length s -1))
 
+val seqFirst : s: seq 'a -> Tot 'a
+let seqFirst s = 
+	(Seq.head s)	
+
+
+val tail_mem_left_wrapper: #a: eqtype -> #f : cmp a -> pivot: a -> 
+							s: seq a {Seq.sorted f s /\ Seq.length s > 0 /\ f pivot (seqFirst s)} ->
+							Lemma(ensures (forall y. (Seq.mem y s ==> f pivot y ))) 
+							(decreases (Seq.length s))
+
+let rec tail_mem_left_wrapper #a #f pivot s = 
+	if Seq.length s = 1 then () else
+	tail_mem_left_wrapper #a #f pivot (Seq.tail s)
+
 val tail_mem : 	#a : eqtype -> #f: cmp a -> 
 			pivot : a -> 
-			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ Seq.mem pivot  s = false /\ f (seqLast s) pivot } ->
+			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ f (seqLast s) pivot } ->
 			Lemma (ensures (forall y. (Seq.mem y s ==> f y pivot)))(decreases (Seq.length s))
 
 let rec tail_mem #a #f pivot s = 
@@ -24,12 +38,12 @@ let rec tail_mem #a #f pivot s =
 val tail_mem_wrapper: #a : eqtype -> 
 			#f: cmp a -> 
 			pivot : a -> 
-			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ 
-					Seq.mem pivot  s = false /\ f (seqLast s) pivot } -> 
+			s : seq a {Seq.sorted f s /\ Seq.length s > 0 /\ f (seqLast s) pivot } -> 
 			Tot(r: seq a {(forall y. (Seq.mem y r ==> f y pivot))})
 
 let tail_mem_wrapper #a #f pivot s = 
 	tail_mem #a #f pivot s; s		
+
 
 val right_tail_mem: #a: eqtype -> #f: cmp a -> pivot : a -> s: seq a { Seq.sorted f s /\ Seq.length s > 0 /\ Seq.mem pivot s = false /\ 
 			f pivot (Seq.index s 0)} -> 
@@ -151,3 +165,21 @@ let rec upd l counter value =
 	match l with
 	| hd::tl -> if (counter = 0) then value:: tl else hd::upd tl (counter-1) value
 	| [] -> []		
+
+val ordered_addition_l: #a : eqtype -> #f : cmp a -> pivot : a -> 
+			s1: seq a {Seq.length s1 > 0
+			/\ Seq.sorted f s1 /\ f (seqLast s1) pivot} ->
+			Tot(s3: seq a {Seq.sorted f s3}) 
+
+let ordered_addition_l #a #f pivot s1 = 
+		let s2 = Seq.createEmpty in 
+		let s1 = tail_mem_wrapper #a #f pivot s1 in 
+		sorted_seq_concat_wrapper #a #f pivot s1 s2		
+
+val ordered_addition_left_mem: #a : eqtype -> #f: cmp a -> pivot : a -> 
+		s1: seq a {Seq.length s1 > 0 /\ Seq.sorted f s1 /\ (forall y. Seq.mem y s1 ==> f y pivot)} ->
+		Tot (s3: seq a {Seq.sorted f s3 /\ Seq.length s3 = Seq.length s1 + 1})
+
+let ordered_addition_left_mem #a #f pivot s1 = 
+		let s2 = Seq.createEmpty in 
+		sorted_seq_concat_wrapper #a #f pivot s1 s2		

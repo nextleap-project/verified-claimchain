@@ -22,7 +22,7 @@ assume val lemma_split: #a : eqtype -> #f: cmp a-> s: seq a
 								))
 
 								
-assume val lemma_more : #a: eqtype -> #f: cmp a -> sl: skipList a f {Sl.length sl > 0} -> 
+assume val lemma_more : #a: eqtype -> #f: cmp a -> sl: skipList a f -> 
 		Lemma(ensures(forall 
 			(counter_global : nat{counter_global < Sl.length sl}) 
 			(counter_local : nat {counter_local < List.length (getIndex sl counter_global)}) .
@@ -103,7 +103,7 @@ let add_infinity #a #f s fst_i max =
 	(r, i)	
 
 val split: #a: eqtype -> #f: cmp a -> 
-			sl : skipList a f {Sl.length sl > 0} -> 
+			sl : skipList a f -> 
 			place: nat {place > 0 /\ place < Sl.length sl -1} -> 
 			max: a {forall y. Seq.mem y (getValues sl) ==> f y max} -> 
 			Tot(skipList a f * skipList a f)
@@ -123,7 +123,7 @@ let rec right_part_list place l_temp indexes counter =
 				right_part_list place l_temp indexes (counter +1) 
 
 val right_part: #a: eqtype -> #f: cmp a ->place : nat  -> 
-				sl: skipList a f {Sl.length sl > 0} -> 
+				sl: skipList a f -> 
 				s_temp : seq (non_empty_list nat) {Seq.length s_temp= Sl.length sl - place} ->
 				i: nat{place + i < Sl.length sl -1} -> 
 				Tot (r: seq (non_empty_list nat){Seq.length r = Sl.length sl - place })(decreases (Sl.length sl - i))

@@ -8,13 +8,38 @@ open SkipList2.Seq.Properties
 module List = FStar.List.Tot
 module Sl = SkipList2.Statement
 
-assume val lemma_last_element_biggest: #a : eqtype -> #f: cmp(a)  ->  sl: skipList a f{Sl.length sl > 1} -> value: a
+assume val lemma_last_element_biggest: #a : eqtype -> #f: cmp(a)  ->  sl: skipList a f{Sl.length sl > 0} -> value: a
 -> Lemma (ensures (f value (last_element_values  #a #f sl)))	
 
 assume val lemma_index_3 : #a: eqtype -> #f: cmp a -> sl:skipList a f {Sl.length sl > 1} -> 
 					counter_global:nat{counter_global < (Sl.length sl -1)} -> 
 					Lemma(ensures(last_element_indexed #a #f sl counter_global = counter_global +1))
 
+
+	
+assume val lemma_split: #a : eqtype -> #f: cmp a-> s: seq a 
+								{Seq.sorted f s} ->
+								place : nat {place < Seq.length s} -> 
+								Lemma (ensures 
+									( 
+										(Seq.sorted f (fst(Seq.split s place))) /\ 
+										(Seq.sorted f (snd(Seq.split s place)))
+								))
+
+								
+assume val lemma_more : #a: eqtype -> #f: cmp a -> sl: skipList a f -> 
+		Lemma(ensures(forall 
+			(counter_global : nat{counter_global < Sl.length sl}) 
+			(counter_local : nat {counter_local < List.length (getIndex sl counter_global)}) .
+			List.index (getIndex sl counter_global) counter_local > counter_global))
+
+assume val lemma_mem: #a: eqtype -> #f: cmp a ->max: a -> 
+		sl: skipList a f {forall y. Seq.mem y (getValues sl) ==> f y max} -> 
+		place: nat {place < Sl.length sl - 1} -> 
+		Lemma(ensures (let fst, snd = Seq.split (getValues sl) place in forall y. Seq.mem y fst ==> f y max)) 
+
+
+		
 
 assume val lemma_index_1: #a: eqtype -> #f: (cmp a) -> sl: skipList a f{length sl> 1}  -> 
 	Lemma(ensures
@@ -40,10 +65,12 @@ let lemma_index_1_wrapper #a #f sl counter_global counter_local =
 	let i = getIndex sl counter_global in 
 	let l = List.index i counter_local in
 	lemma_index_1 #a #f sl; l
+
 val lemma_index_2_wrapper: #a: eqtype -> #f: (cmp a) -> sl: skipList a f{Sl.length sl> 1} -> 
 		counter_global: nat{counter_global < Sl.length sl} -> 
 		counter_local : nat{ counter_local <List.length
 				(getIndex sl counter_global)} -> Tot(r: nat{ r > counter_global} )
+
 let lemma_index_2_wrapper #a #f sl counter_global counter_local = 
 	let i = getIndex sl counter_global in 
 	let l = List.index i counter_local in
@@ -124,3 +151,4 @@ let rec sorted_slice  #a #f s n =
 	if n = 0 then l1 #a #f s 
 	else if (n = 1) then (sorted_slice #a #f s (n-1))
 	else (sorted_slice #a #f s (n-1); lemma_level_down #a #f s (n-1))
+
