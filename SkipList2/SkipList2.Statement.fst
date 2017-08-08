@@ -5,18 +5,24 @@ open FStar.Option
 open SkipList2.Seq.Properties
 
 module Seq = FStar.Seq.Base
+module SeqPr = FStar.Seq.Properties
 module List = FStar.List.Tot
 
 
 type cmp (a:eqtype) = f:(a -> a -> Tot bool){total_order a f}
 type non_empty_list 'a = lst: list 'a{Cons? lst}
 
+(* total order f a a = true *)
+(*the easiest ex is <= *)
 type skipList(a:eqtype) (f:cmp a) = 
-| Mk:  values: seq(a){sorted f values/\ length values >0}-> 
-indexes : seq(non_empty_list nat)
-{Seq.length values = Seq.length indexes} -> r: skipList a f
-
-
+| Mk:  values: seq(a)
+			{sorted f values/\ length values >0 /\
+				(forall (e:a). f e (let length = length values in 
+										let length = length -1 in 
+											Seq.index values length ) )
+				 }-> 
+		indexes : seq(non_empty_list nat)
+		{Seq.length values = Seq.length indexes} -> r: skipList a f
 
 val getValues : #a: eqtype -> #f: cmp(a)-> sl:skipList a f-> Tot(seq a)
 let getValues #a #f sl = 
@@ -121,7 +127,9 @@ let rec lst_z_g lst value_to_put elements_number counter  =
 	let lst = List.append lst [value_to_put] in 
 	lst_z_g lst value_to_put elements_number (counter + 1) 
 
-val create : #a : eqtype -> #f:(cmp a ) -> value_max : a -> elements_number: nat {elements_number > 0} ->
+val create : #a : eqtype -> #f:cmp a -> 
+	value_max : a{forall (e : a). f e value_max} -> 
+	elements_number: nat {elements_number > 0} ->
 	Tot(skipList a f)
 
 let create #a #f value_max elements_number = 
@@ -143,3 +151,11 @@ let last_element_values #a #f sl =
 	let values = getValues sl in 
 	let length = Seq.length values -1 in 
 	Seq.index values length 
+
+(*)
+val lemma_last_element_biggest: #a : eqtype -> 
+		#f: cmp a  ->  sl: skipList a f ->
+		Lemma (ensures (forall (i:nat {i < (length sl -1)}). 
+			f (getValue sl i) (last_element_values sl)))	
+
+let lemma_last_element_biggest #a #f sl = () *)

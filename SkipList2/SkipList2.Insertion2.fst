@@ -30,6 +30,8 @@ type searchResult (a:eqtype) (f:cmp a) (sl: skipList a f) (value: a) (counter_gl
 		}
 	 -> searchResult a f sl value counter_global_previous
 
+#set-options "--max_fuel 0 --initial_fuel 0 --z3rlimit 0" 
+
 val change_values: #a: eqtype -> #f: cmp a -> value : a -> sl: skipList a f{Seq.mem value (getValues sl) = false} -> 
 		 place: nat{ 
 				(
@@ -41,18 +43,33 @@ val change_values: #a: eqtype -> #f: cmp a -> value : a -> sl: skipList a f{Seq.
 						)
 				)
 			}->
-		Tot(s3: seq a{Seq.sorted f s3 /\ Seq.length s3 = Sl.length sl+ 1 }) 
+		Tot(s3: seq a{Seq.sorted f s3 /\ Seq.length s3 = Sl.length sl+ 1 /\ 
+			(forall (e:a). f e (let length = Seq.length s3 in 
+										let length = length -1 in 
+											Seq.index s3 length ) )}) 
 
 let change_values #a #f value sl place = 
+	assert(forall (e:a). f e (last_element_values sl));
 	let s = getValues sl in 
 	if (place = 0 && f value (Seq.index (getValues sl) 0)) then  
 		let s = right_tail_mem_split #a #f value s place in 
 		let e = ordered_addition_0 #a #f value s in 
+			let length = Seq.length e in 
+			let length = length -1 in 
+			assert(forall (elem:a). f elem (Seq.index e length));
 		e
 	else 		
 		let s = main_lemma_split #a #f value s place in 
 		let s1 = fst s in 
-		let s2 = snd s in sorted_seq_concat_wrapper #a #f value s1 s2
+		let s2 = snd s in 
+		let e = sorted_seq_concat_wrapper #a #f value s1 s2 in 
+			let length = Seq.length e in 
+			let length = length -1 in 
+			assert(forall (elem:a). f elem (Seq.index e length));
+		e
+
+
+#reset-options "--max_fuel 1 --initial_fuel 1 --z3rlimit 100"
 
 private val searchPlaceIndex: #a: eqtype -> #f: cmp a -> sl : skipList a f -> value: a-> 
 						counter_global: nat{counter_global < (Sl.length sl -1) /\ 
@@ -64,7 +81,8 @@ private val searchPlaceIndex: #a: eqtype -> #f: cmp a -> sl : skipList a f -> va
 let rec searchPlaceIndex #a #f sl value counter_global counter_local  = 
 	let values = getValues sl in 
 	let index = lemma_index_1_2_wrapper #a #f sl counter_global counter_local in 
-	lemma_last_element_biggest #a #f sl value;
+	lemma_last_element_biggest #a #f sl;
+	assert(f value (last_element_values sl));
 	if  (f value (Seq.index values index)) then 
 		(
 			if (f (Seq.index values (index-1)) value ) then 
@@ -113,7 +131,9 @@ let searchPlace #a #f  sl value =
 				(getValues sl) counter_global)) 
 		then counter_global
 		else if (Sl.length sl = 1) then 
-			(lemma_last_element_biggest #a #f sl value; counter_global)
+			(lemma_last_element_biggest #a #f sl;
+			assert(f value (last_element_values sl));	
+			counter_global)
 	else
 		searchPlaceSequence #a #f sl value counter_global
 
@@ -161,14 +181,6 @@ let rec change_indexes_slevel #a #f sl place level i lst =
 	else 
 		(s, lst)
 
-val l_append: b: list 'a -> c: list 'a -> Lemma(ensures (List.length (List.append b c ) = List.length b + List.length c))
-let rec l_append b c = 
-	match b with 
-	|[] -> ()
-	| hd::tl -> l_append tl c
-
-val append_one_elem: b: list 'a -> c: 'a -> Tot(r: list 'a {List.length r = List.length b + 1})
-let append_one_elem b c = let l = List.append b [c] in  l_append b [c]; l
 
 val _create: lst: list 'a -> 
 			counter : nat{counter >= List.length lst} -> 
@@ -201,7 +213,7 @@ assume val generate_level:flag: bool-> max_level: int -> Tot(level: nat {max_lev
 
 val addition: #a: eqtype -> #f: cmp a -> 
 		value : a  -> 
-		sl: skipList a f {Sl.length sl > 0 /\ Seq.mem value (getValues sl) = false /\ f value (last_element_values sl)} -> 
+		sl: skipList a f { Seq.mem value (getValues sl) = false /\ f value (last_element_values sl)} -> 
 		max_level: nat -> Tot(r: skipList a f
 									{(Sl.length r = Sl.length sl + 1)}) 
 

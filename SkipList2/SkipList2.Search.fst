@@ -50,7 +50,8 @@ private val searchPlaceIndex: #a: eqtype -> #f : cmp a ->
 let rec searchPlaceIndex #a #f sl value counter_global counter_local = 
 	let values = getValues sl in 
 	let index = lemma_index_1_2_wrapper #a #f sl counter_global counter_local in 
-	lemma_last_element_biggest #a #f sl value;
+	lemma_last_element_biggest #a #f sl;
+	assert(f value (last_element_values sl));
 	if (value = Seq.index values index) then Found (Some index)
 	else if (f (Seq.index values index) value) then 
 		NotFound index

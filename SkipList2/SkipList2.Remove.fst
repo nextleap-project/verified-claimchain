@@ -123,7 +123,9 @@ let rebuildSequence #a #f s place =
 			assert(f (Seq.index s (place -1)) (Seq.index s (place)));
 			assert(f (seqLast s1) (seqFirst s4));	
 			concat #a #f s1 s4
-		)		
+		)
+
+#set-options "--max_fuel 0 --initial_fuel 0 --z3rlimit 0" 				
 
 val remove: #a: eqtype -> #f : cmp a -> 
 		sl: skipList a f {Sl.length sl > 1} -> 
@@ -135,4 +137,7 @@ let remove #a #f sl place =
 	let indexes = Sl.getIndexes sl in 
 	let values_new = rebuildSequence #a #f values place in 
 	let indexes_new = rebuildIndexes #a #f sl place in 
+	assert(forall (e:a). f e (let length = Seq.length values_new in 
+										let length = length -1 in 
+											Seq.index values_new length));
 	Sl.Mk #a #f values_new indexes_new		
