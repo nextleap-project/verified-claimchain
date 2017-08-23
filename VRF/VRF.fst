@@ -8,8 +8,11 @@ open Hacl.UInt8
 open Hacl.UInt32
 open FStar.UInt32
 
+open Hacl.Impl.Ed25519.Ladder.Step
+open Hacl.Spec.Endianness
 open Hacl.Bignum25519
 open Hacl.Impl.Ed25519.PointAdd
+open Hacl.Impl.Ed25519.Ladder
 
 open Hacl.Impl.Ed25519.ExtPoint
 open Hacl.Impl.Ed25519.PointCompress
@@ -80,17 +83,27 @@ val scalarAddition:
         /\ red_513 x3 /\ red_513 y3 /\ red_513 z3 /\ red_513 t3)
   ))
 
-let scalarAddition out p q = 
-	point_add out p q
+let scalarAddition out p q = point_add out p q
 
-assume val scalarMultiplication : out: point -> p: point ->  k:buffer Hacl.UInt8.t{length k = 32 } -> 
-	Stack unit
-		(requires
-			(fun h0 -> live h0 p /\ live h0 k /\ live h0 out)
-		)
-		(ensures
-			(fun h0 _ h1 -> live h1 p /\ live h1 k /\ live h0 out /\ modifies_1 k h0 h1)	
-		)
+val scalarMultiplication:
+  result:point ->
+  scalar:buffer Hacl.UInt8.t{length scalar = 32} ->
+  q:point ->
+  Stack unit
+  (requires (fun h -> Buffer.live h scalar /\ live h q /\ live h result /\ point_inv h q))
+  (ensures (fun h0 _ h1 -> Buffer.live h0 scalar /\ live h0 q /\ live h0 result
+    /\ point_inv h0 q /\ live h1 result /\ modifies_1 result h0 h1 /\ point_inv h1 result /\
+    (let r = as_point h1 result in
+     let n  = reveal_sbytes (as_seq h0 scalar) in
+     let q  = as_point h0 q in
+     r == Spec.Ed25519.point_mul n q) ))
+
+let scalarMultiplication result scalar q = point_mul result scalar q
+
+
+assume val bytesConcat: out: bytes -> m1: bytes -> m2: bytes -> Stack unit
+	(requires (fun h0 -> live h0 out /\ live h0 m1 /\ live h0 m2))
+	(ensures (fun h0 _ h1 -> live h1 out /\ live h1 m1 /\ live h1 m2 /\ modifies_1 out h0 h1))
 
 assume val isPointOnCurve: p: point -> Stack bool
 	(requires (fun h0 -> live h0 p))	
@@ -114,8 +127,6 @@ val _ECP2OS: out: hbytes{length out = 32} -> p: point -> Stack unit
 
 let _ECP2OS out p = point_compress out p
 
-
-
 assume val random: random: bytes {length random = 32} -> 	
 	Stack unit 
 		(requires 
@@ -125,11 +136,39 @@ assume val random: random: bytes {length random = 32} ->
 			(fun h0 _ h1 -> live h0 random /\ modifies_1 random h0 h1)
 		)
 
-assume val _ECVRF_hash_to_curve:
+assume val _I2OSP : out: bytes -> number: FStar.UInt32.t -> 
+	Stack unit 
+	(requires (fun h0 -> ))
+
+
+val _helper_ECVRF_hash_to_curve: 
+	ctr: FStar.UInt32.t -> 
+	counter_length: FStar.UInt32.t -> 
+	pk: bytes->
+	input: bytes -> 
+	Stack bool
+	(requires(fun h0 -> true))
+	(ensures (fun h0 _ h1 -> true))
+
+let rec _helper_ECVRF_hash_to_curve ctr counter_length pk input = 
+		let toHash = create 0uy 32ul in  
+		let toHash1 = create 0uy 32ul in 
+		let toHash2 = create 0uy 32ul in 
+	bytesConcat toHash input pk;
+	bytesConcat toHash1 toHash ctr; 
+		
+
+
+
+	
+
+
+
+val _ECVRF_hash_to_curve:
 	output: point -> 
 	input: bytes {length input < max_input_len_8 - 36} ->
 	len_input : uint32_t {v len_input = length input} -> 
-	public_key: point -> 
+	public_key: point{disjoint output public_key} -> 
 	Stack bool 
 		(requires
 			(fun h0 -> live h0 output /\ live h0 input /\ live h0 public_key)
@@ -138,6 +177,12 @@ assume val _ECVRF_hash_to_curve:
 			(fun h0 _ h1 -> live h1 output /\ live h1 input /\ live h1 public_key /\ modifies_1 output h0 h1)
 		)
 
+let test output input len_input public_key = 
+	let ctr = 0 in 
+		let pk = create (Hacl.Cast.uint8_to_sint8 0uy) 32ul in 
+		_ECP2OS pk public_key; _helper
+
+(*)
 assume val _ECVRF_hash_points: out: bytes -> 
 	p1: point -> 
 	p2:point -> 
