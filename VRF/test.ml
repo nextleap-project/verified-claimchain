@@ -47,7 +47,7 @@ let test_ECVRF_verify =
 	let privateKeyInt = (Prims.parse_int "21") in
 	let privateKeyBytes = (_I2OSP privateKeyInt (Prims.parse_int "32")) in 
 	let privateKeyBytesLE = little_endian_ privateKeyBytes in 
-	let publicKey = (scalarMultiplication generator privateKeyBytesLE) in 
+	let publicKey = (pointMultiplication generator privateKeyBytesLE) in 
 	let buffer0 = createBuffer (Prims.parse_int "32") (FStar_UInt8.of_string "8") in 
     let buffer1 = createBuffer (Prims.parse_int "32") (FStar_UInt8.of_string "9")   in  
 	let pi = _ECVRF_prove buffer0 publicKey privateKeyBytes in  				 
@@ -59,15 +59,3 @@ let test_ECVRF_verify =
     let result = _ECVRF_verify publicKey pi buffer0 in 
     	Printf.printf "%b" result  	
 
-    (*)
-    let result = test publicKey privateKeyBytes buffer0 in   
-   
-    	if (FStar_Option.isNone result) then 
-      Printf.printf "%s" "None"
-    else 
-    	let result =  (FStar_Option.get result) in 
-    		Printf.printf "%s" (to_string result);
-    		() 
-*)
-(*6  107  4  151  143  244  31  6  189  129  229  58  68  105  108  240  74  164  111  105  189  86  104  79  248  28  151  112  187  30 
-173  38  68  64  87  178  28  147  211  232  239  67  109  214  11  181  154  152  127  255  255  255  255  255  255  255  255  255  255  255  255  255  255  252  167  50  171  133  107  19  124  12  187  159  169  72  56  10  144  127*)
