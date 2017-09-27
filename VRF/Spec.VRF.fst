@@ -1,6 +1,5 @@
 module Spec.VRF
 
-
 open FStar.UInt32
 open FStar.UInt8
 open FStar.Seq
@@ -24,11 +23,20 @@ let bytes =  seq FStar.UInt8.t
 let key = lbytes 32
 let field = prime
 
-let n = 32
+let n = 16
 
 
 let d : elem = 37095705934669439343138083508754565189542113879843219016388785533085940283555
 type twisted_edward_point = ext_point
+
+
+let g_x : elem = 15112221349535400772501151409588531511454012693041857206046113283949847762202
+let g_y : elem = 46316835694926478169428394003475163141307993866256225615783033603165251855960
+
+
+let coordinality = 57896044618658097711785492504343953926856930875039260848015607506283634007912
+
+let generator: twisted_edward_point = (g_x, g_y, 1, g_x `fmul` g_y)
 
 val scalarMultiplication : point : twisted_edward_point -> k: bytes -> Tot twisted_edward_point
 let scalarMultiplication point k = 
@@ -52,18 +60,26 @@ let isPointOnCurve point =
 	let right = fadd z2 dt2 in 
 	(left = right)
 
-
-val serializePoint : point: twisted_edward_point -> Tot bytes
-let serializePoint point = point_compress point
-
-val deserializePoint : b: bytes{Seq.length b = 32} -> Tot (option twisted_edward_point)
-let deserializePoint b = point_decompress b
-
-val _OS2ECP : point: bytes{Seq.length point = 32} -> Tot(option twisted_edward_point)
-let _OS2ECP point = deserializePoint point
+val _OS2ECP2Points : point: bytes{Seq.length point = 32} -> Tot(option twisted_edward_point)
+let _OS2ECP2Points point = 
+  let y = little_endian point in
+  let sign = true in
+  let y = y % (pow2 255) in
+  let x = recover_x y sign in
+  match x with
+  | Some x -> Some (x, y % prime, one, x `fmul` (y % prime))
+  | _ -> 
+  		let sign = false in 
+  		let x = recover_x y sign in 
+  		match x with 
+  		|Some x -> Some (x, y % prime, one, x `fmul` (y % prime))
+  		| _ -> None
 
 val _ECP2OS : gamma: twisted_edward_point -> Tot(r: bytes {Seq.length r = 32})
-let _ECP2OS gamma = serializePoint gamma
+let _ECP2OS gamma = point_compress gamma
+
+val _OS2ECP : point: bytes{Seq.length point = 32} -> Tot(option twisted_edward_point)
+let _OS2ECP point = point_decompress point
 
 val nat_to_uint8: x: int {x < 256} -> Tot(FStar.UInt8.t)
 let nat_to_uint8 x = FStar.UInt8.uint_to_t (to_uint_t 8 x)
@@ -79,16 +95,16 @@ let rec _helper_I2OSP value s counter  =
 	let r = nat_to_uint8 r in 
 	let s = upd s counter r in 
 	let number = value / mask  in (*changed *)
-		if (counter +1 <Seq.length s) then 
-			_helper_I2OSP number s (counter +1)
-		else s
+		if (counter -1 >=0 ) then 
+			_helper_I2OSP number s (counter -1 )
+else s
 
 val _I2OSP: value: nat -> n: int{n > 0} -> Tot(r: bytes{Seq.length r = n})
 let _I2OSP value n = 
 	if (pow2 (n * 8)  <= value) then Seq.create n 0uy (* changed*)
 	else 
 		let s = Seq.create n 0uy in 
-		 (_helper_I2OSP value s 0)
+(_helper_I2OSP value s (n -1))
 
 val _helper_OS2IP: s: bytes  -> counter: nat {counter < Seq.length s} -> number: nat -> 
 	Tot (nat)(decreases (Seq.length s - counter))
@@ -96,11 +112,12 @@ val _helper_OS2IP: s: bytes  -> counter: nat {counter < Seq.length s} -> number:
 let rec _helper_OS2IP s counter number = 
 	let temp = Seq.index s counter in 
 	let temp = uint8_to_int temp in 
-	let counter_mult = pow2 (8 * counter) in 
+	let counter_mult = pow2 (8 * (Seq.length s - counter -1 )) in 
 	let number = number + (op_Multiply counter_mult temp) in 
-	if (counter + 1 = Seq.length s) then 
-		number 
-	else _helper_OS2IP s (counter+1) number
+	if (counter +1 < Seq.length s) then  
+		_helper_OS2IP s (counter +1 ) number
+	else 
+		number	
 
 val _OS2IP: s: bytes{Seq.length s > 0} -> nat
 
@@ -120,9 +137,8 @@ let hash input =
 
 #set-options "--initial_ifuel 1 --max_ifuel 1 --initial_fuel 0 --max_fuel 0 --z3rlimit 30"
 
-
 val _ECVRF_decode_proof: 
-		pi: bytes {Seq.length pi = op_Multiply 4 n} -> 
+		pi: bytes {Seq.length pi = op_Multiply 5 n} -> 
 		Tot(tuple3 (option twisted_edward_point) (c:bytes{Seq.length c = n}) (s:bytes {Seq.length s = (op_Multiply 2 n)}))
 		 (* due to the fact that
 		 we do point multiplication using seq of bytes, 
@@ -130,17 +146,12 @@ val _ECVRF_decode_proof:
 		back is decided to be needless*)
 
 let _ECVRF_decode_proof pi = 
-	let gamma, cs = Seq.split pi n in 
-		assert(Seq.length gamma = n);
-		assert(Seq.length cs = op_Multiply 3 n);
+	let gamma, cs = Seq.split pi (op_Multiply 2 n) in 
 	let c, s = Seq.split cs n in 
-		assert(Seq.length c = n);
-		assert(Seq.length s = op_Multiply 2 n);
 	let point = _OS2ECP gamma in 
 	(point, c, s)
 
-#reset-options
-
+#reset-options "--initial_ifuel 1 --max_ifuel 1 --initial_fuel 0 --max_fuel 0 --z3rlimit 100"
 
 val _helper_ECVRF_hash_to_curve : 
 	ctr : nat{ctr < field} ->counter_length:nat{counter_length > 0} ->  
@@ -156,15 +167,15 @@ let rec _helper_ECVRF_hash_to_curve ctr counter_length pk input =
 	let hash = hash toHash in
 	(*let possible_point = seqConcat positive_point_const hash in*) (* this one was deleted becauce of decompression func *) 
 	(*let possible_point = _OS2ECP possible_point in *)
-	let possible_point = _OS2ECP hash in 
-	if isNone possible_point then None else
-		if isPointOnCurve possible_point then possible_point
-		else
-			if (ctr +1) < field
-				then (
-					assert((ctr+1) <field);
-					_helper_ECVRF_hash_to_curve (ctr+1) counter_length pk input)
-			else None	
+	let possible_point = point_decompress hash in 
+	if isNone possible_point then 
+		(
+			if (ctr + 1) < field then 
+					(_helper_ECVRF_hash_to_curve (ctr+1) counter_length pk input) else
+			None
+		)
+		else 
+			possible_point				
 
 val _ECVRF_hash_to_curve: input: bytes{Seq.length input < Spec.SHA2_256.max_input_len_8 - 36 } -> 
 			public_key: (twisted_edward_point) -> Tot(option twisted_edward_point)			
@@ -174,7 +185,8 @@ let _ECVRF_hash_to_curve input public_key =
 	let pk = _ECP2OS public_key in 
 	let point = _helper_ECVRF_hash_to_curve ctr 4 pk input in point
 
-assume val random: 	max: nat -> Tot(random : nat {random > 0 /\ random < max})	
+val random: 	max: nat{max > 1} -> Tot(random : nat {random < max})
+let random max = max - 1
 
 val randBytes: max: nat -> Tot(r:bytes{Seq.length r = 32})
 let randBytes max = 
@@ -196,60 +208,165 @@ let _ECVRF_hash_points generator h public_key gamma gk hk =
 	let h = fst (FStar.Seq.split h' n) in 
 	_OS2IP h
 
-val _ECVRF_prove: input: bytes {Seq.length input < Spec.SHA2_256.max_input_len_8 - 36 } ->  public_key: twisted_edward_point -> 
+val little_endian_ins: a: bytes -> counter: nat {counter < Seq.length a} -> b: bytes-> Tot  bytes
+let rec little_endian_ins a counter b = 
+	let element = Seq.index a counter in 
+	let newSeq = Seq.upd b (Seq.length a -1 - counter) element in 
+	if (counter+1 < Seq.length a) then 
+		little_endian_ins a (counter+1) newSeq
+	else 
+		newSeq	
+
+
+
+val little_endian_: a: bytes -> Tot bytes
+let little_endian_ a = 
+	let s = Seq.create (Seq.length a) 0uy in 
+	little_endian_ins a 0 s
+
+
+
+val _ECVRF_prove: input: bytes {Seq.length input < Spec.SHA2_256.max_input_len_8 - 36 } ->  
+			public_key: twisted_edward_point -> 
 			private_key : bytes (* private key in this scope is a mupliplier of the generator *)
-			-> generator : twisted_edward_point->  
-			Tot(proof: option bytes {Some?proof ==> Seq.length (Some?.v proof) = op_Multiply 4 n})
+			->
+			Tot(proof: option bytes {Some?proof ==> Seq.length (Some?.v proof) = op_Multiply 5 n})
 			(*Tot(proof: option bytes{Seq.length proof = 5 * n + 1})  *)
 
-let _ECVRF_prove input public_key private_key generator = 
+
+let _ECVRF_prove input public_key private_key = 
 	let h = _ECVRF_hash_to_curve input public_key in 
 		if isNone h then None (* trying to convert the hash to point, if it was not possible returns None *)
 		else 
-			let h = get h in 
-	let gamma = scalarMultiplication h private_key in 
-	let k_ = random field in 
-	let k =  _I2OSP k_ 32 in  (* random in sequence  *)
-		let gk = scalarMultiplication generator k in  (* k< (2^8)^32 = 2^(8*32) = 2^(2^3 * 2^ 5 = 256) *) (* *)
-		let hk = scalarMultiplication h k in 
-	let c = _ECVRF_hash_points generator h public_key gamma gk hk in (*int*)
-			let cq = op_Multiply c field in  (*int*)
-			let cqmodq = cq % field in 
-			assert(cqmodq < field);
-			assert(k_ <field); 
-			assert(k_ + field > field); (* I assume that the operations are done in the field. *)
-	let k_ = k_ + field in 		
-			(* random was generated in the seq -> cast to nat *)
-	let s = k_ - cqmodq (* int *) in (*cqmodq is < field *)
-	assert (s > 0);
-			let fst = _ECP2OS gamma in (*32*)
+			let h = get h in 		
+		let private_keyLE = little_endian_ private_key in 		
+	let gamma = scalarMultiplication h private_keyLE in 
+	let k_ = random coordinality in 
+	let k =  _I2OSP k_ 32 in 
+	let kLE = little_endian_ k in 
+		let gk = scalarMultiplication generator kLE in  
+		let hk = scalarMultiplication h kLE in 
+	let c = _ECVRF_hash_points generator h public_key gamma gk hk in 
+			let cPrivateKey = op_Multiply c (_OS2IP private_key) in  
+			let cPrivateKeyModQ = cPrivateKey % coordinality in 
+	let k_  = k_ + coordinality in 
+	let s = k_ - cPrivateKeyModQ in 
+	let s = s % coordinality in 
+			let fst = _ECP2OS gamma in 
 			let snd = _I2OSP c n in (* Seq length snd = n*)
-			let thd = _I2OSP s ( op_Multiply 2 n) (* Seq.length thr = 2n *) in 
+			let thd = _I2OSP s (op_Multiply 2 n) (* Seq.length thr = 2n *) in 
 	let pi = seqConcat fst (seqConcat snd thd) in Some pi
 
+val _ECVRF_proof2hash: pi: bytes{Seq.length pi = op_Multiply 5 n } -> Tot(hash: bytes{Seq.length hash = n})
 
-val _ECVRF_proof2hash: pi: bytes{Seq.length pi = op_Multiply 4 n } -> Tot(hash: bytes{Seq.length hash = n})
-let _ECVRF_proof2hash pi = fst( Seq.split pi n)
+let _ECVRF_proof2hash pi = 
+	let right_part = snd( Seq.split pi (op_Multiply 2 n)) in 
+	fst (Seq.split right_part n)
 
-val _ECVRF_verify : generator: twisted_edward_point ->  public_key : twisted_edward_point ->
-		pi: bytes {Seq.length pi = op_Multiply 4 n } -> 
+val _ECVRF_verify :
+		public_key : twisted_edward_point ->
+		proof: bytes {Seq.length proof = op_Multiply 4 n } -> 
 		input : bytes{Seq.length input < Spec.SHA2_256.max_input_len_8 - 36 } -> 
 		Tot(bool)
 
-let _ECVRF_verify generator public_key pi input = 
-	let gamma, c, s = _ECVRF_decode_proof pi in 
-	if not(isPointOnCurve gamma) then false else
+let _ECVRF_verify public_key proof input = 
+	let gamma, c, s = _ECVRF_decode_proof proof in 
 	if isNone gamma then false
 		else let gamma = get gamma in 
-	let pkc = scalarMultiplication public_key c in 
-	let gs = scalarMultiplication generator s in 
-	let u  = scalarAddition pkc gs in 
+	let cLE = little_endian_ c in 
+	let sLE = little_endian_ s in 	
+	let yc = scalarMultiplication public_key cLE in 
+	let gs = scalarMultiplication generator sLE in 
+	let u  = scalarAddition yc gs in 
 	let h = _ECVRF_hash_to_curve input public_key in 
 		if isNone h then false
 	else 
 	let h = get h in 
-	let gammac = scalarMultiplication gamma c in 
-	let hs = scalarMultiplication h s in 
+	let gammac = scalarMultiplication gamma cLE in 
+	let hs = scalarMultiplication h sLE in 
 	let v = scalarAddition gammac hs in 
 	let c_prime = _ECVRF_hash_points generator h public_key gamma u v in 
 	(_OS2IP c) = c_prime
+(*)
+let test public_key private_key input = 
+	let h = _ECVRF_hash_to_curve input public_key in 
+		if isNone h then None (* trying to convert the hash to point, if it was not possible returns None *)
+		else 
+			let h = get h in 		
+		let private_keyLE = little_endian_ private_key in 		
+	let gamma = scalarMultiplication h private_keyLE in 
+	let k_ = random coordinality in 
+	let k =  _I2OSP k_ 32 in 
+	let kLE = little_endian_ k in 
+		let gk = scalarMultiplication generator kLE in  
+		let hk = scalarMultiplication h kLE in 
+	let c = _ECVRF_hash_points generator h public_key gamma gk hk in 
+			let cPrivateKey = op_Multiply c (_OS2IP private_key) in  
+			let cPrivateKeyModQ = cPrivateKey % coordinality in 
+	let k_  = k_ + coordinality in 
+	let s = k_ - cPrivateKeyModQ in 
+	let s = s % coordinality in 
+			let fst = _ECP2OS gamma in 
+			let snd = _I2OSP c n in (* Seq length snd = n*)
+			let thd = _I2OSP s (op_Multiply 2 n) (* Seq.length thr = 2n *) in 
+
+	let point = _OS2ECP gamma in 
+	(point, c, s)		
+
+	if isNone gamma then false
+		else let gamma = get gamma in 
+	let cLE = little_endian_ c in 
+	let sLE = little_endian_ s in 	
+	let yc = scalarMultiplication public_key cLE in 
+	let gs = scalarMultiplication generator sLE in 
+	let u  = scalarAddition yc gs in 
+	let h = _ECVRF_hash_to_curve input public_key in 
+		if isNone h then false
+	else 
+	let h = get h in 
+	let gammac = scalarMultiplication gamma cLE in 
+	let hs = scalarMultiplication h sLE in 
+	let v = scalarAddition gammac hs in 
+	let c_prime = _ECVRF_hash_points generator h public_key gamma u v in 
+	Some c
+
+
+
+(*gk = generator c/2 + *)
+(*)
+let test_stuff n =
+	let f i_ =
+		let i = _I2OSP i_ 32 in
+		let i = little_endian_ i in
+		scalarMultiplication generator i
+	in
+	let gs = Seq.init n f in
+	let h x = _OS2ECP (_ECP2OS x) in
+	let rec loop k acc =
+		let rec loop' i acc =
+			let gsum = scalarAddition (Seq.index gs i) (Seq.index gs (k-i)) in
+			if i < 0 then acc else loop' (i-1) ((i, k, h gsum, h (Seq.index gs k))::acc)
+		in
+		if k < 0 then acc else loop (k-1) (loop' k acc)
+	in
+	loop (n-1) []
+
+let test2 public_key pi input = 
+		let k_ = 13 in 
+		let k = _I2OSP k_ 32 in 
+			let k = little_endian_ k in 
+		let c_ = 97769769 in 
+		let c = _I2OSP c_ 32 in 
+			let c = little_endian_ c in 
+		let s_ = (k_ - c_)% coordinality in (* -8 mod 2^25519 *)
+		let s = _I2OSP s_ 32 in 
+			let s = little_endian_ s in 
+		let gc = scalarMultiplication generator c in (* 10g*)
+		let gs = scalarMultiplication generator s in  (* -8 g *)
+		let gsum = scalarAddition gc gs in 	 (* 10g + -8g *)
+		let gk = scalarMultiplication generator k in 
+		_OS2ECP(_ECP2OS gk)
+
+
+(*)
+
